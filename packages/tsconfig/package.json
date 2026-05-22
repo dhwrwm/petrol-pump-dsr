@@ -1,0 +1,10 @@
+{
+  "name": "@petrol/tsconfig",
+  "private": true,
+  "version": "0.0.0",
+  "exports": {
+    "./base": "./base.json",
+    "./nest": "./nest.json",
+    "./react": "./react.json"
+  }
+}

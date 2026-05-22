@@ -1,0 +1,23 @@
+{
+  "name": "petrol-pump-dsr",
+  "private": true,
+  "packageManager": "pnpm@8.6.2",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter @petrol/api --filter @petrol/web dev",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "db:generate": "pnpm --filter @petrol/api prisma:generate",
+    "db:migrate": "pnpm --filter @petrol/api prisma:migrate",
+    "db:studio": "pnpm --filter @petrol/api prisma:studio"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@petrol/tsconfig": "workspace:*",
+    "eslint": "latest",
+    "prettier": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest"
+  }
+}

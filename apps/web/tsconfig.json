@@ -1,0 +1,4 @@
+{
+  "extends": "@petrol/tsconfig/react",
+  "include": ["src", "vite.config.ts"]
+}

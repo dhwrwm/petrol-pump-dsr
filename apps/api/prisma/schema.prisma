@@ -1,0 +1,307 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FuelGrade {
+  PETROL
+  DIESEL
+  PREMIUM_PETROL
+  CNG
+}
+
+enum ShiftStatus {
+  OPEN
+  CLOSED
+  RECONCILED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  CREDIT
+  FLEET_CARD
+}
+
+enum InventoryMovementType {
+  PURCHASE
+  DIP_ADJUSTMENT
+  CALIBRATION
+  LOSS
+  TRANSFER
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("operator")
+  stationId     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  station       Station?  @relation(fields: [stationId], references: [id])
+  sessions      Session[]
+  accounts      Account[]
+  shiftsOpened  Shift[]   @relation("ShiftOpenedBy")
+  shiftsClosed  Shift[]   @relation("ShiftClosedBy")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Organization {
+  id        String    @id @default(cuid())
+  name      String
+  gstin     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  stations  Station[]
+}
+
+model Station {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String
+  code           String           @unique
+  address        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  users          User[]
+  tanks          Tank[]
+  dispensers     Dispenser[]
+  shifts         Shift[]
+  customers      CreditCustomer[]
+  expenses       Expense[]
+}
+
+model Product {
+  id        String     @id @default(cuid())
+  grade     FuelGrade  @unique
+  name      String
+  unit      String     @default("L")
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  tanks     Tank[]
+  prices    Price[]
+  sales     Sale[]
+  movements InventoryMovement[]
+}
+
+model Price {
+  id          String    @id @default(cuid())
+  productId   String
+  stationId   String
+  effectiveAt DateTime
+  amount      Decimal   @db.Decimal(12, 2)
+  createdAt   DateTime  @default(now())
+
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@unique([productId, stationId, effectiveAt])
+}
+
+model Tank {
+  id          String              @id @default(cuid())
+  stationId   String
+  productId   String
+  name        String
+  capacity    Decimal             @db.Decimal(12, 3)
+  currentDip  Decimal             @default(0) @db.Decimal(12, 3)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  station     Station             @relation(fields: [stationId], references: [id])
+  product     Product             @relation(fields: [productId], references: [id])
+  nozzles     Nozzle[]
+  movements   InventoryMovement[]
+}
+
+model Dispenser {
+  id        String    @id @default(cuid())
+  stationId String
+  name      String
+  serialNo  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  station   Station   @relation(fields: [stationId], references: [id])
+  nozzles   Nozzle[]
+}
+
+model Nozzle {
+  id          String         @id @default(cuid())
+  dispenserId String
+  tankId      String
+  label       String
+  openingMeter Decimal       @default(0) @db.Decimal(14, 3)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  dispenser   Dispenser      @relation(fields: [dispenserId], references: [id])
+  tank        Tank           @relation(fields: [tankId], references: [id])
+  readings    MeterReading[]
+  sales       Sale[]
+}
+
+model Shift {
+  id          String       @id @default(cuid())
+  stationId   String
+  openedById  String
+  closedById  String?
+  status      ShiftStatus  @default(OPEN)
+  openedAt    DateTime     @default(now())
+  closedAt    DateTime?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  station     Station      @relation(fields: [stationId], references: [id])
+  openedBy    User         @relation("ShiftOpenedBy", fields: [openedById], references: [id])
+  closedBy    User?        @relation("ShiftClosedBy", fields: [closedById], references: [id])
+  readings    MeterReading[]
+  sales       Sale[]
+  payments    Payment[]
+  expenses    Expense[]
+}
+
+model MeterReading {
+  id           String    @id @default(cuid())
+  shiftId      String
+  nozzleId     String
+  openingMeter Decimal   @db.Decimal(14, 3)
+  closingMeter Decimal?  @db.Decimal(14, 3)
+  testingLiters Decimal  @default(0) @db.Decimal(12, 3)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  shift        Shift     @relation(fields: [shiftId], references: [id])
+  nozzle       Nozzle    @relation(fields: [nozzleId], references: [id])
+
+  @@unique([shiftId, nozzleId])
+}
+
+model Sale {
+  id          String          @id @default(cuid())
+  shiftId     String
+  nozzleId    String
+  productId   String
+  customerId  String?
+  liters      Decimal         @db.Decimal(12, 3)
+  rate        Decimal         @db.Decimal(12, 2)
+  amount      Decimal         @db.Decimal(12, 2)
+  soldAt      DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+
+  shift       Shift           @relation(fields: [shiftId], references: [id])
+  nozzle      Nozzle          @relation(fields: [nozzleId], references: [id])
+  product     Product         @relation(fields: [productId], references: [id])
+  customer    CreditCustomer? @relation(fields: [customerId], references: [id])
+  payments    Payment[]
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  shiftId   String
+  saleId    String?
+  method    PaymentMethod
+  amount    Decimal       @db.Decimal(12, 2)
+  reference String?
+  paidAt    DateTime      @default(now())
+  createdAt DateTime      @default(now())
+
+  shift     Shift         @relation(fields: [shiftId], references: [id])
+  sale      Sale?         @relation(fields: [saleId], references: [id])
+}
+
+model CreditCustomer {
+  id          String    @id @default(cuid())
+  stationId   String
+  name        String
+  phone       String?
+  vehicleNo   String?
+  creditLimit Decimal   @default(0) @db.Decimal(12, 2)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  station     Station   @relation(fields: [stationId], references: [id])
+  sales       Sale[]
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  stationId   String
+  shiftId     String?
+  category    String
+  description String?
+  amount      Decimal   @db.Decimal(12, 2)
+  spentAt     DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  station     Station   @relation(fields: [stationId], references: [id])
+  shift       Shift?    @relation(fields: [shiftId], references: [id])
+}
+
+model InventoryMovement {
+  id        String                @id @default(cuid())
+  tankId    String
+  productId String
+  type      InventoryMovementType
+  quantity  Decimal               @db.Decimal(12, 3)
+  note      String?
+  movedAt   DateTime              @default(now())
+  createdAt DateTime              @default(now())
+
+  tank      Tank                  @relation(fields: [tankId], references: [id])
+  product   Product               @relation(fields: [productId], references: [id])
+}

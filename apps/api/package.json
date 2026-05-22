@@ -1,0 +1,42 @@
+{
+  "name": "@petrol/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "prisma generate && nest build",
+    "dev": "prisma generate && nest start --watch",
+    "start": "node dist/main.js",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@nestjs/common": "latest",
+    "@nestjs/core": "latest",
+    "@nestjs/platform-express": "latest",
+    "@petrol/config": "workspace:*",
+    "@prisma/adapter-pg": "latest",
+    "@prisma/client": "latest",
+    "@prisma/client-runtime-utils": "latest",
+    "@thallesp/nestjs-better-auth": "latest",
+    "better-auth": "latest",
+    "dotenv": "latest",
+    "reflect-metadata": "latest",
+    "rxjs": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@nestjs/cli": "latest",
+    "@nestjs/schematics": "latest",
+    "@nestjs/testing": "latest",
+    "@petrol/tsconfig": "workspace:*",
+    "@types/node": "latest",
+    "eslint": "latest",
+    "prisma": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest"
+  }
+}

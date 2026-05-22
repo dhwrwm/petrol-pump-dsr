@@ -1,0 +1,47 @@
+node_modules
+dist
+build
+.turbo
+.vite
+.env
+.env.local
+.env.*.local
+coverage
+*.log
+apps/api/src/generated
+
+
+# dependencies
+node_modules
+
+# env files
+.env
+.env.*
+!.env.example
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# build outputs
+.next
+dist
+out
+build
+
+# turborepo
+.turbo
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode
+.idea
+
+# prisma
+prisma/migrations
+
+# docker
+docker-data
