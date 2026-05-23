@@ -3,6 +3,7 @@ import {
   Fuel,
   Gauge,
   HardHat,
+  LayoutDashboard,
   ReceiptText,
   Settings,
   UserRound,
@@ -19,10 +20,23 @@ export function AppSidebar() {
         <Fuel size={24} />
         <span>DSR</span>
       </div>
-      <nav className="grid gap-1.5 max-md:grid-cols-6">
+      <nav className="grid gap-1.5 max-md:grid-cols-7">
         <NavLink
           to="/"
           end
+          className={({ isActive }) =>
+            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+              isActive
+                ? "bg-brand-800 text-white"
+                : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
+            }`
+          }
+        >
+          <LayoutDashboard size={18} />
+          Dashboard
+        </NavLink>
+        <NavLink
+          to="/shifts"
           className={({ isActive }) =>
             `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive

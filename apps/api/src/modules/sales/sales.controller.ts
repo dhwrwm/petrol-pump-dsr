@@ -10,6 +10,17 @@ import { SalesService } from "./sales.service.js";
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
+  @Get("summary")
+  async summary(
+    @Req() request: RequestHeaders,
+    @Query("period") period?: string,
+  ) {
+    const session = await getRequiredSession(request);
+    const validPeriod = period === "month" ? "month" : "week";
+
+    return this.salesService.summary(session.user.id, validPeriod);
+  }
+
   @Get()
   async list(
     @Req() request: RequestHeaders,

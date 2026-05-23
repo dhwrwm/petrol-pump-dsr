@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: petrol-pump-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: WEB_URL
+        sync: false
+      - key: API_URL
+        sync: false

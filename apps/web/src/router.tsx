@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { ProtectedLayout } from "./components/protected-layout";
+import { DashboardPage } from "./features/dashboard";
 import { ShiftDashboard } from "./features/shift";
 import { SalesPage } from "./features/sales";
 import { TanksPage } from "./features/tanks";
@@ -11,7 +12,8 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedLayout />,
     children: [
-      { index: true, element: <ShiftDashboard /> },
+      { index: true, element: <DashboardPage /> },
+      { path: "shifts", element: <ShiftDashboard /> },
       { path: "sales", element: <SalesPage /> },
       { path: "tanks", element: <TanksPage /> },
       { path: "credit", element: <CreditPage /> },
