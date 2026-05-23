@@ -30,6 +30,12 @@ export class EmployeesController {
     return this.employeesService.list(session.user.id);
   }
 
+  @Get(":id")
+  async findOne(@Req() request: RequestHeaders, @Param("id") id: string) {
+    const session = await getRequiredSession(request);
+    return this.employeesService.findOne(session.user.id, id);
+  }
+
   @Post()
   async create(
     @Req() request: RequestHeaders,

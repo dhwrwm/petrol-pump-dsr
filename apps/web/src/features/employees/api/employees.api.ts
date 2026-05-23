@@ -5,6 +5,10 @@ export function getEmployees() {
   return apiRequest<Employee[]>("/api/employees");
 }
 
+export function getEmployee(id: string) {
+  return apiRequest<Employee>(`/api/employees/${id}`);
+}
+
 export function createEmployee(input: {
   name: string;
   phone?: string;

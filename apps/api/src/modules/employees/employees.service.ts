@@ -37,6 +37,19 @@ export class EmployeesService {
     }
   }
 
+  async findOne(userId: string, employeeId: string) {
+    const stationId = await this.getStationId(userId);
+    await this.assertEmployeeBelongsToStation(employeeId, stationId);
+
+    return prisma.employee.findUnique({
+      where: { id: employeeId },
+      include: {
+        documents: { orderBy: { createdAt: "desc" } },
+        salaryRecords: { orderBy: { month: "desc" } },
+      },
+    });
+  }
+
   async list(userId: string) {
     const stationId = await this.getStationId(userId);
     return prisma.employee.findMany({

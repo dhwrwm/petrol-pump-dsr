@@ -5,7 +5,7 @@ import { ShiftDashboard } from "./features/shift";
 import { SalesPage } from "./features/sales";
 import { TanksPage } from "./features/tanks";
 import { CreditPage } from "./features/credit";
-import { EmployeesPage } from "./features/employees";
+import { EmployeesPage, EmployeeDetailPage } from "./features/employees";
 import { SettingsPage } from "./features/settings";
 
 export const router = createBrowserRouter([
@@ -18,6 +18,7 @@ export const router = createBrowserRouter([
       { path: "tanks", element: <TanksPage /> },
       { path: "credit", element: <CreditPage /> },
       { path: "employees", element: <EmployeesPage /> },
+      { path: "employees/:id", element: <EmployeeDetailPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],

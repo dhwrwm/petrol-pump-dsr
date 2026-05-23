@@ -1,12 +1,6 @@
 import { useState } from "react";
-import {
-  FileText,
-  HardHat,
-  Plus,
-  RefreshCw,
-  Trash2,
-  X,
-} from "lucide-react";
+import { HardHat, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,30 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  addEmployeeDocument,
-  addSalaryRecord,
-  createEmployee,
-  deleteEmployee,
-  deleteEmployeeDocument,
-  updateEmployee,
-} from "../api/employees.api";
+import { createEmployee, deleteEmployee, updateEmployee } from "../api/employees.api";
 import { useEmployees } from "../hooks/use-employees";
-import type { Employee } from "../types/employees.types";
-
-const DOC_LABELS: Record<string, string> = {
-  AADHAR: "Aadhar",
-  PAN: "PAN Card",
-  DRIVING_LICENSE: "Driving Licence",
-  OTHER: "Other",
-};
-
-function formatMonth(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    month: "long",
-    year: "numeric",
-  });
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
@@ -59,283 +31,9 @@ function formatDate(iso: string) {
   });
 }
 
-function EmployeeDetailPanel({
-  employee,
-  onClose,
-  onRefetch,
-}: {
-  employee: Employee;
-  onClose: () => void;
-  onRefetch: () => void;
-}) {
-  const [docType, setDocType] = useState("AADHAR");
-  const [docUrl, setDocUrl] = useState("");
-  const [docFileName, setDocFileName] = useState("");
-  const [docError, setDocError] = useState("");
-  const [isAddingDoc, setIsAddingDoc] = useState(false);
-
-  const [salMonth, setSalMonth] = useState("");
-  const [salPaid, setSalPaid] = useState("");
-  const [salAdvance, setSalAdvance] = useState("");
-  const [salDeductions, setSalDeductions] = useState("");
-  const [salNote, setSalNote] = useState("");
-  const [salError, setSalError] = useState("");
-  const [isAddingSal, setIsAddingSal] = useState(false);
-
-  async function handleAddDoc(e: React.FormEvent) {
-    e.preventDefault();
-    if (!docUrl.trim()) {
-      setDocError("Document URL is required.");
-      return;
-    }
-    setIsAddingDoc(true);
-    setDocError("");
-    try {
-      await addEmployeeDocument(employee.id, {
-        type: docType,
-        url: docUrl.trim(),
-        fileName: docFileName.trim() || undefined,
-      });
-      setDocUrl("");
-      setDocFileName("");
-      onRefetch();
-    } catch (err: unknown) {
-      setDocError(err instanceof Error ? err.message : "Failed to add document.");
-    } finally {
-      setIsAddingDoc(false);
-    }
-  }
-
-  async function handleDeleteDoc(docId: string) {
-    try {
-      await deleteEmployeeDocument(employee.id, docId);
-      onRefetch();
-    } catch {
-      onRefetch();
-    }
-  }
-
-  async function handleAddSalary(e: React.FormEvent) {
-    e.preventDefault();
-    if (!salMonth || !salPaid) {
-      setSalError("Month and paid amount are required.");
-      return;
-    }
-    setIsAddingSal(true);
-    setSalError("");
-    try {
-      await addSalaryRecord(employee.id, {
-        month: salMonth + "-01",
-        paid: Number(salPaid),
-        advance: salAdvance ? Number(salAdvance) : 0,
-        deductions: salDeductions ? Number(salDeductions) : 0,
-        note: salNote.trim() || undefined,
-      });
-      setSalMonth("");
-      setSalPaid("");
-      setSalAdvance("");
-      setSalDeductions("");
-      setSalNote("");
-      onRefetch();
-    } catch (err: unknown) {
-      setSalError(err instanceof Error ? err.message : "Failed to save salary record.");
-    } finally {
-      setIsAddingSal(false);
-    }
-  }
-
-  return (
-    <Card className="py-4">
-      <CardHeader className="px-4 pb-2">
-        <CardTitle className="text-base font-bold">
-          {employee.name} — {employee.designation}
-        </CardTitle>
-        <CardAction>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
-            <X size={16} />
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="px-4 grid gap-6">
-        {/* Documents */}
-        <section className="grid gap-3">
-          <h3 className="text-sm font-semibold">Documents</h3>
-          {employee.documents.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>File name</TableHead>
-                  <TableHead>Link</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employee.documents.map((doc) => (
-                  <TableRow key={doc.id}>
-                    <TableCell>{DOC_LABELS[doc.type] ?? doc.type}</TableCell>
-                    <TableCell>{doc.fileName ?? "—"}</TableCell>
-                    <TableCell>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline text-sm"
-                      >
-                        View
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteDoc(doc.id)}
-                        aria-label="Delete document"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          <form onSubmit={handleAddDoc} className="flex gap-2 flex-wrap items-end">
-            <div className="grid gap-1.5">
-              <label className="text-xs font-medium">Type</label>
-              <select
-                value={docType}
-                onChange={(e) => setDocType(e.target.value)}
-                className="border rounded-md px-2 py-1.5 text-sm bg-background"
-              >
-                <option value="AADHAR">Aadhar</option>
-                <option value="PAN">PAN Card</option>
-                <option value="DRIVING_LICENSE">Driving Licence</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
-            <div className="grid gap-1.5 flex-1 min-w-[180px]">
-              <label className="text-xs font-medium">URL *</label>
-              <Input
-                placeholder="Paste document link"
-                value={docUrl}
-                onChange={(e) => setDocUrl(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1.5 flex-1 min-w-[140px]">
-              <label className="text-xs font-medium">File name</label>
-              <Input
-                placeholder="e.g. aadhar_front.pdf"
-                value={docFileName}
-                onChange={(e) => setDocFileName(e.target.value)}
-              />
-            </div>
-            <Button type="submit" size="sm" disabled={isAddingDoc}>
-              <Plus size={14} />
-              {isAddingDoc ? "Adding..." : "Add"}
-            </Button>
-          </form>
-          {docError && <p className="text-xs text-destructive">{docError}</p>}
-        </section>
-
-        {/* Salary Records */}
-        <section className="grid gap-3">
-          <h3 className="text-sm font-semibold">
-            Salary — Fixed: ₹{Number(employee.salary).toLocaleString("en-IN")}
-          </h3>
-          {employee.salaryRecords.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead className="text-right">Paid (₹)</TableHead>
-                  <TableHead className="text-right">Advance (₹)</TableHead>
-                  <TableHead className="text-right">Deductions (₹)</TableHead>
-                  <TableHead>Note</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employee.salaryRecords.map((rec) => (
-                  <TableRow key={rec.id}>
-                    <TableCell>{formatMonth(rec.month)}</TableCell>
-                    <TableCell className="text-right">
-                      {Number(rec.paid).toLocaleString("en-IN")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {Number(rec.advance).toLocaleString("en-IN")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {Number(rec.deductions).toLocaleString("en-IN")}
-                    </TableCell>
-                    <TableCell>{rec.note ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          <form onSubmit={handleAddSalary} className="flex gap-2 flex-wrap items-end">
-            <div className="grid gap-1.5">
-              <label className="text-xs font-medium">Month *</label>
-              <Input
-                type="month"
-                value={salMonth}
-                onChange={(e) => setSalMonth(e.target.value)}
-                className="w-36"
-              />
-            </div>
-            <div className="grid gap-1.5 w-28">
-              <label className="text-xs font-medium">Paid (₹) *</label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={salPaid}
-                onChange={(e) => setSalPaid(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1.5 w-28">
-              <label className="text-xs font-medium">Advance (₹)</label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={salAdvance}
-                onChange={(e) => setSalAdvance(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1.5 w-28">
-              <label className="text-xs font-medium">Deductions (₹)</label>
-              <Input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={salDeductions}
-                onChange={(e) => setSalDeductions(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1.5 flex-1 min-w-[140px]">
-              <label className="text-xs font-medium">Note</label>
-              <Input
-                placeholder="e.g. shortage deduction"
-                value={salNote}
-                onChange={(e) => setSalNote(e.target.value)}
-              />
-            </div>
-            <Button type="submit" size="sm" disabled={isAddingSal}>
-              <Plus size={14} />
-              {isAddingSal ? "Saving..." : "Save"}
-            </Button>
-          </form>
-          {salError && <p className="text-xs text-destructive">{salError}</p>}
-        </section>
-      </CardContent>
-    </Card>
-  );
-}
-
 export function EmployeesPage() {
   const { employees, isPending, error, refetch } = useEmployees();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -347,7 +45,6 @@ export function EmployeesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const activeCount = employees.filter((e) => e.isActive).length;
-  const selected = employees.find((e) => e.id === selectedId) ?? null;
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -373,7 +70,9 @@ export function EmployeesPage() {
       setShowForm(false);
       refetch();
     } catch (err: unknown) {
-      setFormError(err instanceof Error ? err.message : "Failed to add employee.");
+      setFormError(
+        err instanceof Error ? err.message : "Failed to add employee.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -392,7 +91,6 @@ export function EmployeesPage() {
   async function handleDelete(id: string) {
     try {
       await deleteEmployee(id);
-      if (selectedId === id) setSelectedId(null);
       refetch();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete employee.");
@@ -449,7 +147,10 @@ export function EmployeesPage() {
                   />
                 </div>
                 <div className="grid gap-1.5 flex-1 min-w-[180px]">
-                  <label htmlFor="emp-designation" className="text-sm font-medium">
+                  <label
+                    htmlFor="emp-designation"
+                    className="text-sm font-medium"
+                  >
                     Designation *
                   </label>
                   <Input
@@ -556,7 +257,6 @@ export function EmployeesPage() {
                   <TableHead>Designation</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Joined</TableHead>
-                  <TableHead>Resigned</TableHead>
                   <TableHead>Salary</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -566,41 +266,33 @@ export function EmployeesPage() {
                 {employees.map((emp) => (
                   <TableRow
                     key={emp.id}
-                    data-state={selectedId === emp.id ? "selected" : undefined}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/employees/${emp.id}`)}
                   >
                     <TableCell className="font-medium">{emp.name}</TableCell>
                     <TableCell>{emp.designation}</TableCell>
                     <TableCell>{emp.phone ?? "—"}</TableCell>
                     <TableCell>{formatDate(emp.joinedAt)}</TableCell>
                     <TableCell>
-                      {emp.resignedAt ? formatDate(emp.resignedAt) : "—"}
+                      ₹{Number(emp.salary).toLocaleString("en-IN")}
                     </TableCell>
-                    <TableCell>₹{Number(emp.salary).toLocaleString("en-IN")}</TableCell>
                     <TableCell>
                       <Badge variant={emp.isActive ? "default" : "secondary"}>
                         {emp.isActive ? "Active" : "Resigned"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell
+                      className="text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex gap-1.5 justify-end">
                         <Button
                           variant="outline"
                           size="sm"
                           type="button"
                           onClick={() =>
-                            setSelectedId(
-                              selectedId === emp.id ? null : emp.id,
-                            )
+                            handleToggleActive(emp.id, emp.isActive)
                           }
-                        >
-                          <FileText size={14} />
-                          {selectedId === emp.id ? "Close" : "Manage"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          onClick={() => handleToggleActive(emp.id, emp.isActive)}
                         >
                           {emp.isActive ? "Resign" : "Reinstate"}
                         </Button>
@@ -621,14 +313,6 @@ export function EmployeesPage() {
             </Table>
           </CardContent>
         </Card>
-      )}
-
-      {selected && (
-        <EmployeeDetailPanel
-          employee={selected}
-          onClose={() => setSelectedId(null)}
-          onRefetch={refetch}
-        />
       )}
     </>
   );
