@@ -1,12 +1,24 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { prisma } from "../../lib/prisma.js";
 import { CreateSaleDto } from "./sales.dto.js";
 
 @Injectable()
 export class SalesService {
-  list(shiftId?: string) {
+  async list(userId: string, shiftId?: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stationId: true },
+    });
+
+    if (!user?.stationId) {
+      throw new NotFoundException("No station assigned to this user.");
+    }
+
     return prisma.sale.findMany({
-      where: shiftId ? { shiftId } : undefined,
+      where: {
+        shift: { stationId: user.stationId },
+        ...(shiftId ? { shiftId } : {}),
+      },
       include: {
         product: true,
         nozzle: true,

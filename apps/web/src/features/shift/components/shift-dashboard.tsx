@@ -1,49 +1,45 @@
 import {
   Banknote,
   CreditCard,
-  Droplets,
   Fuel,
-  Gauge,
   IndianRupee,
   LogOut,
   Plus,
-  ReceiptText,
   RefreshCw,
-  UserRound,
 } from "lucide-react";
-import { type StationSetup } from "../../setup";
-import { type SaleSummary, type TankSummary } from "../types/shift.types";
+import { useOutletContext } from "react-router";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardAction,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { LayoutContext } from "../../../components/protected-layout";
+import { useSales } from "../hooks/use-sales";
+import { type TankSummary } from "../types/shift.types";
 
-const sales: SaleSummary[] = [
-  {
-    nozzle: "D1-N1",
-    fuel: "Petrol",
-    liters: "142.320",
-    amount: "15,512.88",
-    method: "UPI",
-  },
-  {
-    nozzle: "D1-N2",
-    fuel: "Diesel",
-    liters: "211.840",
-    amount: "19,642.36",
-    method: "Fleet",
-  },
-  {
-    nozzle: "D2-N1",
-    fuel: "Premium",
-    liters: "48.220",
-    amount: "5,832.40",
-    method: "Cash",
-  },
-];
+function formatINR(value: number) {
+  return value.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
-type ShiftDashboardProps = {
-  onSignOut: () => Promise<void>;
-  station: StationSetup;
-};
+export function ShiftDashboard() {
+  const { station, onSignOut } = useOutletContext<LayoutContext>();
+  const { sales, isPending, refetch } = useSales();
 
-export function ShiftDashboard({ onSignOut, station }: ShiftDashboardProps) {
   const tanks = station.tanks.map(
     (tank): TankSummary => ({
       name: tank.name,
@@ -55,159 +51,196 @@ export function ShiftDashboard({ onSignOut, station }: ShiftDashboardProps) {
     }),
   );
 
+  const grossSales = sales.reduce((sum, s) => sum + Number(s.amount), 0);
+  const fuelSold = sales.reduce((sum, s) => sum + Number(s.liters), 0);
+  const cashTotal = sales.reduce((sum, s) => {
+    const cashPayments = s.payments.filter((p) => p.method === "CASH");
+    return sum + cashPayments.reduce((ps, p) => ps + Number(p.amount), 0);
+  }, 0);
+  const digitalTotal = sales.reduce((sum, s) => {
+    const digitalPayments = s.payments.filter((p) => p.method !== "CASH");
+    return sum + digitalPayments.reduce((ps, p) => ps + Number(p.amount), 0);
+  }, 0);
+
   return (
-    <main className="shell">
-      <aside className="sidebar" aria-label="Main navigation">
-        <div className="brand">
-          <Fuel size={24} />
-          <span>DSR</span>
+    <>
+      <header className="flex justify-between items-center gap-4 max-md:flex-col max-md:items-start">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase text-muted-foreground tracking-wide">
+            Station {station.code}
+          </p>
+          <h1 className="text-3xl font-bold">Morning shift</h1>
         </div>
-        <nav>
-          <a className="active" href="/">
-            <Gauge size={18} />
-            Shift
-          </a>
-          <a href="/">
-            <ReceiptText size={18} />
-            Sales
-          </a>
-          <a href="/">
-            <Droplets size={18} />
-            Tanks
-          </a>
-          <a href="/">
-            <UserRound size={18} />
-            Credit
-          </a>
-        </nav>
-      </aside>
+        <div className="flex gap-2.5">
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            aria-label="Refresh dashboard"
+            onClick={refetch}
+          >
+            <RefreshCw size={18} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => void onSignOut()}
+            type="button"
+            aria-label="Sign out"
+          >
+            <LogOut size={18} />
+          </Button>
+          <Button type="button">
+            <Plus size={18} />
+            New sale
+          </Button>
+        </div>
+      </header>
 
-      <section className="workspace">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Station {station.code}</p>
-            <h1>Morning shift</h1>
-          </div>
-          <div className="actions">
-            <button
-              className="iconButton"
-              type="button"
-              aria-label="Refresh dashboard"
-            >
-              <RefreshCw size={18} />
-            </button>
-            <button
-              className="iconButton"
-              onClick={() => void onSignOut()}
-              type="button"
-              aria-label="Sign out"
-            >
-              <LogOut size={18} />
-            </button>
-            <button type="button">
-              <Plus size={18} />
-              New sale
-            </button>
-          </div>
-        </header>
+      <section
+        className="grid grid-cols-[repeat(4,minmax(150px,1fr))] gap-3.5 max-md:grid-cols-1"
+        aria-label="Shift summary"
+      >
+        {[
+          {
+            icon: <IndianRupee size={20} />,
+            label: "Gross sales",
+            value: `₹${formatINR(grossSales)}`,
+          },
+          {
+            icon: <Fuel size={20} />,
+            label: "Fuel sold",
+            value: `${fuelSold.toFixed(3)} L`,
+          },
+          {
+            icon: <Banknote size={20} />,
+            label: "Cash in drawer",
+            value: `₹${formatINR(cashTotal)}`,
+          },
+          {
+            icon: <CreditCard size={20} />,
+            label: "Digital payments",
+            value: `₹${formatINR(digitalTotal)}`,
+          },
+        ].map((metric) => (
+          <Card key={metric.label} className="py-4">
+            <CardContent className="px-4">
+              <div className="text-primary mb-4">{metric.icon}</div>
+              <p className="text-xs text-muted-foreground">{metric.label}</p>
+              <strong className="block mt-1.5 text-xl font-bold">
+                {metric.value}
+              </strong>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
 
-        <section className="metrics" aria-label="Shift summary">
-          <article>
-            <IndianRupee size={20} />
-            <p>Gross sales</p>
-            <strong>₹40,987.64</strong>
-          </article>
-          <article>
-            <Fuel size={20} />
-            <p>Fuel sold</p>
-            <strong>402.380 L</strong>
-          </article>
-          <article>
-            <Banknote size={20} />
-            <p>Cash in drawer</p>
-            <strong>₹9,842.00</strong>
-          </article>
-          <article>
-            <CreditCard size={20} />
-            <p>Digital payments</p>
-            <strong>₹31,145.64</strong>
-          </article>
-        </section>
+      <section className="grid grid-cols-[minmax(0,1.45fr)_minmax(320px,0.8fr)] gap-4 max-md:grid-cols-1">
+        <Card className="py-4">
+          <CardHeader className="px-4 pb-0">
+            <CardTitle className="text-lg font-bold">Recent sales</CardTitle>
+            <CardAction>
+              <span className="text-xs text-muted-foreground">
+                {isPending ? "Loading..." : `${sales.length} records`}
+              </span>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="px-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nozzle</TableHead>
+                  <TableHead>Fuel</TableHead>
+                  <TableHead>Liters</TableHead>
+                  <TableHead className="max-md:hidden">Amount</TableHead>
+                  <TableHead className="max-md:hidden">Mode</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sales.length === 0 && !isPending ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>No sales recorded yet</TableCell>
+                  </TableRow>
+                ) : (
+                  sales.slice(0, 10).map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell>{sale.nozzle.label}</TableCell>
+                      <TableCell>{sale.product.name}</TableCell>
+                      <TableCell>{Number(sale.liters).toFixed(3)}</TableCell>
+                      <TableCell className="max-md:hidden">
+                        ₹{formatINR(Number(sale.amount))}
+                      </TableCell>
+                      <TableCell className="max-md:hidden">
+                        {sale.payments[0]?.method ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        <section className="contentGrid">
-          <div className="panel">
-            <div className="panelHeader">
-              <h2>Recent sales</h2>
-              <span>Live DSR</span>
-            </div>
-            <div className="table">
-              <div className="row head">
-                <span>Nozzle</span>
-                <span>Fuel</span>
-                <span>Liters</span>
-                <span>Amount</span>
-                <span>Mode</span>
-              </div>
-              {sales.map((sale) => (
-                <div className="row" key={sale.nozzle}>
-                  <span>{sale.nozzle}</span>
-                  <span>{sale.fuel}</span>
-                  <span>{sale.liters}</span>
-                  <span>₹{sale.amount}</span>
-                  <span>{sale.method}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panelHeader">
-              <h2>Tank stock</h2>
-              <span>Dip ledger</span>
-            </div>
-            <div className="tankList">
+        <Card className="py-4">
+          <CardHeader className="px-4 pb-0">
+            <CardTitle className="text-lg font-bold">Tank stock</CardTitle>
+            <CardAction>
+              <span className="text-xs text-muted-foreground">Dip ledger</span>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="px-4">
+            <div className="grid gap-4">
               {tanks.map((tank) => (
-                <article className="tank" key={tank.name}>
+                <article className="flex flex-col gap-2.5" key={tank.name}>
                   <div>
                     <strong>{tank.name}</strong>
-                    <p>
+                    <p className="text-xs text-muted-foreground">
                       {tank.fuel} · {tank.stock}
                     </p>
                   </div>
                   <div
-                    className="bar"
+                    className="h-2.5 rounded-full bg-muted overflow-hidden"
                     aria-label={`${tank.name} level ${tank.level}%`}
                   >
-                    <span style={{ width: `${tank.level}%` }} />
+                    <span
+                      className="block h-full bg-primary rounded-full"
+                      style={{ width: `${tank.level}%` }}
+                    />
                   </div>
                 </article>
               ))}
             </div>
-          </div>
-        </section>
-
-        <section className="reconciliation">
-          <h2>Shift reconciliation</h2>
-          <div className="reconGrid">
-            <label>
-              Opening meter
-              <input defaultValue="284711.440" />
-            </label>
-            <label>
-              Closing meter
-              <input defaultValue="285113.820" />
-            </label>
-            <label>
-              Testing liters
-              <input defaultValue="1.500" />
-            </label>
-            <label>
-              Expenses
-              <input defaultValue="1250.00" />
-            </label>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       </section>
-    </main>
+
+      <Card className="py-4">
+        <CardHeader className="px-4 pb-0">
+          <CardTitle className="text-lg font-bold">
+            Shift reconciliation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4">
+          <div className="grid grid-cols-[repeat(4,minmax(140px,1fr))] gap-3 max-md:grid-cols-1">
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
+              Opening meter
+              <Input defaultValue="0.000" />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
+              Closing meter
+              <Input defaultValue="0.000" />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
+              Testing liters
+              <Input defaultValue="0.000" />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
+              Expenses
+              <Input defaultValue="0.00" />
+            </label>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }

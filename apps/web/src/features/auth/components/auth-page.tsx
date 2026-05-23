@@ -1,5 +1,8 @@
 import { Fuel, LockKeyhole, LogIn, Mail, UserRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { login, signUp } from "../api/auth.api";
 import { type AuthMode } from "../types/auth.types";
 
@@ -70,31 +73,48 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   }
 
   return (
-    <main className="authShell">
-      <section className="authIntro" aria-label="Station access">
-        <div className="brand">
+    <main
+      className="min-h-screen grid grid-cols-[minmax(340px,1fr)_minmax(380px,520px)] items-center gap-[clamp(28px,6vw,96px)] p-[clamp(24px,6vw,84px)] text-brand-50 max-md:grid-cols-1 max-md:gap-7 max-md:content-center"
+      style={{
+        background:
+          "linear-gradient(120deg, rgba(22,35,31,0.96), rgba(22,35,31,0.84)), url('https://images.unsplash.com/photo-1652924217034-6da42546c12f?auto=format&fit=crop&w=1800&q=80') center / cover",
+      }}
+    >
+      <section className="w-full max-w-[560px] grid gap-5" aria-label="Station access">
+        <div className="flex items-center gap-2.5 text-xl font-extrabold mb-2.5">
           <Fuel size={24} />
           <span>DSR</span>
         </div>
-        <h1>Petrol pump shift control</h1>
-        <p>
+        <h1 className="max-w-[620px] text-[clamp(38px,5.6vw,76px)] leading-none max-md:text-[40px]">
+          Petrol pump shift control
+        </h1>
+        <p className="max-w-[520px] text-[#d8e2dd] text-lg leading-relaxed max-md:text-base">
           Sign in to reconcile sales, meter readings, stock, and station cash.
         </p>
-        <div className="authStatus">
+        <div className="w-full max-w-[420px] grid gap-1 py-4 border-y border-white/[0.24]">
           <strong>Operator access</strong>
-          <span>Sales ledger, tank stock, and credit records</span>
+          <span className="text-[#c3d0ca] text-sm">
+            Sales ledger, tank stock, and credit records
+          </span>
         </div>
       </section>
 
-      <section className="authPanel" aria-labelledby="auth-title">
+      <section
+        className="w-full grid gap-6 p-[clamp(22px,4vw,38px)] border border-[#dfe5e0] rounded-lg bg-white shadow-[0_20px_58px_rgba(7,13,11,0.28)] text-foreground"
+        aria-labelledby="auth-title"
+      >
         <div
-          className="authModes"
+          className="grid grid-cols-2 gap-1 p-1 border border-[#d8ded9] rounded-lg bg-[#eff3f0]"
           role="tablist"
           aria-label="Authentication mode"
         >
           <button
             aria-selected={mode === "login"}
-            className={mode === "login" ? "active" : ""}
+            className={`flex justify-center items-center gap-2 py-2.5 px-3 rounded-md font-extrabold text-sm cursor-pointer ${
+              mode === "login"
+                ? "border border-[#d8ded9] bg-white shadow-sm text-foreground"
+                : "border-0 bg-transparent text-muted-foreground"
+            }`}
             onClick={() => changeMode("login")}
             role="tab"
             type="button"
@@ -103,7 +123,11 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           </button>
           <button
             aria-selected={mode === "signup"}
-            className={mode === "signup" ? "active" : ""}
+            className={`flex justify-center items-center gap-2 py-2.5 px-3 rounded-md font-extrabold text-sm cursor-pointer ${
+              mode === "signup"
+                ? "border border-[#d8ded9] bg-white shadow-sm text-foreground"
+                : "border-0 bg-transparent text-muted-foreground"
+            }`}
             onClick={() => changeMode("signup")}
             role="tab"
             type="button"
@@ -112,46 +136,50 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           </button>
         </div>
 
-        <header className="authHeader">
-          <p className="eyebrow">Station account</p>
-          <h2 id="auth-title">
+        <header className="grid gap-1">
+          <p className="text-xs font-bold uppercase text-muted-foreground tracking-wide">
+            Station account
+          </p>
+          <h2 id="auth-title" className="text-[28px] font-bold">
             {mode === "login" ? "Sign in" : "Create account"}
           </h2>
         </header>
 
-        <form className="authForm" onSubmit={handleSubmit}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           {mode === "signup" ? (
-            <label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
               Name
-              <span className="authInput">
+              <span className="flex items-center gap-2.5 border border-input rounded-lg pl-3 bg-white text-muted-foreground focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/15">
                 <UserRound size={18} />
-                <input
+                <Input
                   autoComplete="name"
                   name="name"
                   placeholder="Shift operator"
                   required
+                  className="border-0 pl-0 shadow-none focus-visible:ring-0"
                 />
               </span>
             </label>
           ) : null}
-          <label>
+          <label className="grid gap-2 text-sm font-bold text-muted-foreground">
             Email
-            <span className="authInput">
+            <span className="flex items-center gap-2.5 border border-input rounded-lg pl-3 bg-white text-muted-foreground focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/15">
               <Mail size={18} />
-              <input
+              <Input
                 autoComplete="email"
                 name="email"
                 placeholder="operator@station.in"
                 required
                 type="email"
+                className="border-0 pl-0 shadow-none focus-visible:ring-0"
               />
             </span>
           </label>
-          <label>
+          <label className="grid gap-2 text-sm font-bold text-muted-foreground">
             Password
-            <span className="authInput">
+            <span className="flex items-center gap-2.5 border border-input rounded-lg pl-3 bg-white text-muted-foreground focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/15">
               <LockKeyhole size={18} />
-              <input
+              <Input
                 autoComplete={
                   mode === "login" ? "current-password" : "new-password"
                 }
@@ -160,45 +188,56 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                 placeholder="At least 8 characters"
                 required
                 type="password"
+                className="border-0 pl-0 shadow-none focus-visible:ring-0"
               />
             </span>
           </label>
           {mode === "signup" ? (
-            <label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
               Confirm password
-              <span className="authInput">
+              <span className="flex items-center gap-2.5 border border-input rounded-lg pl-3 bg-white text-muted-foreground focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/15">
                 <LockKeyhole size={18} />
-                <input
+                <Input
                   autoComplete="new-password"
                   minLength={8}
                   name="passwordConfirmation"
                   placeholder="Repeat password"
                   required
                   type="password"
+                  className="border-0 pl-0 shadow-none focus-visible:ring-0"
                 />
               </span>
             </label>
           ) : (
-            <label className="remember">
-              <input defaultChecked name="rememberMe" type="checkbox" />
+            <label className="grid grid-cols-[18px_1fr] items-center gap-2 text-foreground font-semibold text-sm">
+              <input
+                defaultChecked
+                name="rememberMe"
+                type="checkbox"
+                className="h-4 m-0 accent-primary"
+              />
               Keep me signed in
             </label>
           )}
 
           {message ? (
-            <p className="authMessage" role="alert">
-              {message}
-            </p>
+            <Alert variant="destructive">
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
           ) : null}
 
-          <button className="authSubmit" disabled={isSubmitting} type="submit">
+          <Button
+            className="mt-1 h-11 font-extrabold"
+            disabled={isSubmitting}
+            type="submit"
+          >
             <LogIn size={18} />
             {isSubmitting
               ? "Working..."
               : mode === "login"
                 ? "Sign in"
                 : "Create account"}
-          </button>
+          </Button>
         </form>
       </section>
     </main>

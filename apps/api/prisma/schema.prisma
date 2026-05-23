@@ -36,13 +36,19 @@ enum InventoryMovementType {
   TRANSFER
 }
 
+enum Role {
+  MANAGER
+  OWNER
+  ADMIN
+}
+
 model User {
   id            String    @id
   name          String
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  role          String    @default("operator")
+  role          Role      @default(MANAGER)
   stationId     String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -120,6 +126,7 @@ model Station {
   shifts         Shift[]
   customers      CreditCustomer[]
   expenses       Expense[]
+  pumpBoys       PumpBoy[]
 }
 
 model Product {
@@ -187,10 +194,11 @@ model Nozzle {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  dispenser   Dispenser      @relation(fields: [dispenserId], references: [id])
-  tank        Tank           @relation(fields: [tankId], references: [id])
+  dispenser   Dispenser          @relation(fields: [dispenserId], references: [id])
+  tank        Tank               @relation(fields: [tankId], references: [id])
   readings    MeterReading[]
   sales       Sale[]
+  assignments NozzleAssignment[]
 }
 
 model Shift {
@@ -205,13 +213,14 @@ model Shift {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  station     Station      @relation(fields: [stationId], references: [id])
-  openedBy    User         @relation("ShiftOpenedBy", fields: [openedById], references: [id])
-  closedBy    User?        @relation("ShiftClosedBy", fields: [closedById], references: [id])
-  readings    MeterReading[]
-  sales       Sale[]
-  payments    Payment[]
-  expenses    Expense[]
+  station            Station            @relation(fields: [stationId], references: [id])
+  openedBy           User               @relation("ShiftOpenedBy", fields: [openedById], references: [id])
+  closedBy           User?              @relation("ShiftClosedBy", fields: [closedById], references: [id])
+  readings           MeterReading[]
+  sales              Sale[]
+  payments           Payment[]
+  expenses           Expense[]
+  nozzleAssignments  NozzleAssignment[]
 }
 
 model MeterReading {
@@ -304,4 +313,31 @@ model InventoryMovement {
 
   tank      Tank                  @relation(fields: [tankId], references: [id])
   product   Product               @relation(fields: [productId], references: [id])
+}
+
+model PumpBoy {
+  id        String   @id @default(cuid())
+  stationId String
+  name      String
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  station     Station            @relation(fields: [stationId], references: [id])
+  assignments NozzleAssignment[]
+}
+
+model NozzleAssignment {
+  id        String   @id @default(cuid())
+  shiftId   String
+  nozzleId  String
+  pumpBoyId String
+  createdAt DateTime @default(now())
+
+  shift   Shift   @relation(fields: [shiftId], references: [id])
+  nozzle  Nozzle  @relation(fields: [nozzleId], references: [id])
+  pumpBoy PumpBoy @relation(fields: [pumpBoyId], references: [id])
+
+  @@unique([shiftId, nozzleId, pumpBoyId])
 }

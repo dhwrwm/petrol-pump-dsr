@@ -1,5 +1,8 @@
 import { Building2, Fuel, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createStationSetup } from "../api/setup.api";
 import {
   type FuelGrade,
@@ -90,74 +93,85 @@ export function StationSetupPage({
   }
 
   return (
-    <main className="setupShell">
-      <aside className="setupIntro">
-        <div className="brand">
+    <main className="grid grid-cols-[minmax(260px,0.72fr)_minmax(640px,1.28fr)] min-h-screen bg-background max-md:grid-cols-1">
+      <aside className="grid content-start gap-4 p-[clamp(24px,4vw,54px)] bg-brand-900 text-brand-50">
+        <div className="flex items-center gap-2.5 text-xl font-extrabold mb-[clamp(40px,10vh,110px)] max-md:mb-4">
           <Fuel size={24} />
           <span>DSR</span>
         </div>
-        <p className="eyebrow">Station setup</p>
-        <h1>Set the station and opening inventory</h1>
-        <p>
+        <p className="text-xs font-bold uppercase text-[#9ac4b3] tracking-wide">
+          Station setup
+        </p>
+        <h1 className="max-w-[440px] text-[42px] leading-tight max-md:text-[34px]">
+          Set the station and opening inventory
+        </h1>
+        <p className="max-w-[430px] text-[#d5e0db] leading-relaxed">
           The first tanks become the inventory baseline for sales, dip checks,
           and later delivery movements.
         </p>
       </aside>
 
-      <section className="setupPanel" aria-labelledby="setup-title">
-        <header className="setupHeader">
+      <section
+        className="grid content-start gap-5 p-[clamp(24px,4vw,54px)]"
+        aria-labelledby="setup-title"
+      >
+        <header className="flex items-center gap-3.5 text-primary">
           <Building2 size={22} />
           <div>
-            <h2 id="setup-title">Station details</h2>
-            <p>Create the station before starting the first shift.</p>
+            <h2 id="setup-title" className="text-[26px] font-bold text-foreground">
+              Station details
+            </h2>
+            <p className="mt-1 text-muted-foreground">
+              Create the station before starting the first shift.
+            </p>
           </div>
         </header>
 
-        <form className="setupForm" onSubmit={handleSubmit}>
-          <div className="setupFields">
-            <label>
+        <form className="grid gap-6" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-[repeat(2,minmax(220px,1fr))] gap-3.5 max-md:grid-cols-1">
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
               Organization
-              <input
+              <Input
                 name="organizationName"
                 required
                 placeholder="Petrol Pump Group"
               />
             </label>
-            <label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
               GSTIN
-              <input name="gstin" placeholder="Optional" />
+              <Input name="gstin" placeholder="Optional" />
             </label>
-            <label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
               Station name
-              <input name="stationName" required placeholder="BLR Ring Road" />
+              <Input name="stationName" required placeholder="BLR Ring Road" />
             </label>
-            <label>
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground">
               Station code
-              <input name="stationCode" required placeholder="BLR-07" />
+              <Input name="stationCode" required placeholder="BLR-07" />
             </label>
-            <label className="setupWide">
+            <label className="grid gap-2 text-sm font-bold text-muted-foreground col-span-full">
               Address
-              <input name="address" placeholder="Optional station address" />
+              <Input name="address" placeholder="Optional station address" />
             </label>
           </div>
 
-          <section
-            className="inventorySetup"
-            aria-label="Opening tank inventory"
-          >
-            <div className="panelHeader">
-              <h2>Opening tanks</h2>
-              <button type="button" onClick={addTank}>
+          <section className="grid gap-3.5" aria-label="Opening tank inventory">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-bold">Opening tanks</h2>
+              <Button type="button" onClick={addTank} size="sm">
                 <Plus size={17} />
                 Add tank
-              </button>
+              </Button>
             </div>
-            <div className="tankSetupList">
+            <div className="grid gap-2.5">
               {tanks.map((tank, index) => (
-                <article className="tankSetup" key={`${tank.name}-${index}`}>
-                  <label>
+                <article
+                  className="grid grid-cols-[minmax(120px,1fr)_minmax(160px,0.92fr)_minmax(126px,0.78fr)_minmax(126px,0.78fr)_42px] items-end gap-2.5 p-3.5 border border-border rounded-lg bg-card shadow-sm max-md:grid-cols-1"
+                  key={`${tank.name}-${index}`}
+                >
+                  <label className="grid gap-2 text-sm font-bold text-muted-foreground">
                     Tank name
-                    <input
+                    <Input
                       required
                       value={tank.name}
                       onChange={(event) =>
@@ -165,9 +179,10 @@ export function StationSetupPage({
                       }
                     />
                   </label>
-                  <label>
+                  <label className="grid gap-2 text-sm font-bold text-muted-foreground">
                     Fuel
                     <select
+                      className="h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm text-foreground"
                       value={tank.grade}
                       onChange={(event) =>
                         updateTank(index, {
@@ -182,9 +197,9 @@ export function StationSetupPage({
                       ))}
                     </select>
                   </label>
-                  <label>
+                  <label className="grid gap-2 text-sm font-bold text-muted-foreground">
                     Capacity liters
-                    <input
+                    <Input
                       min="0.001"
                       required
                       step="0.001"
@@ -195,9 +210,9 @@ export function StationSetupPage({
                       }
                     />
                   </label>
-                  <label>
+                  <label className="grid gap-2 text-sm font-bold text-muted-foreground">
                     Opening dip
-                    <input
+                    <Input
                       min="0"
                       required
                       step="0.001"
@@ -208,29 +223,35 @@ export function StationSetupPage({
                       }
                     />
                   </label>
-                  <button
-                    className="iconButton"
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9"
                     disabled={tanks.length === 1}
                     onClick={() => removeTank(index)}
                     type="button"
                     aria-label={`Remove ${tank.name}`}
                   >
                     <Trash2 size={17} />
-                  </button>
+                  </Button>
                 </article>
               ))}
             </div>
           </section>
 
           {message || statusError ? (
-            <p className="authMessage" role="alert">
-              {message || statusError}
-            </p>
+            <Alert variant="destructive">
+              <AlertDescription>{message || statusError}</AlertDescription>
+            </Alert>
           ) : null}
 
-          <button className="setupSubmit" disabled={isSubmitting} type="submit">
+          <Button
+            className="justify-self-start h-11 font-extrabold"
+            disabled={isSubmitting}
+            type="submit"
+          >
             {isSubmitting ? "Saving..." : "Save station setup"}
-          </button>
+          </Button>
         </form>
       </section>
     </main>

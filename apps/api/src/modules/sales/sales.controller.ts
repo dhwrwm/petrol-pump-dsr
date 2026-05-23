@@ -1,4 +1,8 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, Req } from "@nestjs/common";
+import {
+  getRequiredSession,
+  type RequestHeaders,
+} from "../../lib/auth-session.js";
 import { CreateSaleDto } from "./sales.dto.js";
 import { SalesService } from "./sales.service.js";
 
@@ -7,12 +11,19 @@ export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Get()
-  list(@Query("shiftId") shiftId?: string) {
-    return this.salesService.list(shiftId);
+  async list(
+    @Req() request: RequestHeaders,
+    @Query("shiftId") shiftId?: string,
+  ) {
+    const session = await getRequiredSession(request);
+
+    return this.salesService.list(session.user.id, shiftId);
   }
 
   @Post()
-  create(@Body() input: CreateSaleDto) {
+  async create(@Req() request: RequestHeaders, @Body() input: CreateSaleDto) {
+    await getRequiredSession(request);
+
     return this.salesService.create(input);
   }
 }
