@@ -1,8 +1,7 @@
-import { FuelGrade } from "../../generated/prisma/index.js";
+import type { ProductType } from "../../generated/prisma/index.js";
 
 export type TankSetupInput = {
-  name: string;
-  grade: FuelGrade;
+  productType: ProductType;
   capacity: string;
   currentDip: string;
 };

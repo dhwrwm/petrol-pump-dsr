@@ -4,21 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { FuelGrade } from "../../generated/prisma/index.js";
+import { ProductType } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import {
   type CreateStationSetupDto,
   type TankSetupInput,
 } from "./setup.dto.js";
 
-const productNames: Record<FuelGrade, string> = {
-  PETROL: "Petrol",
-  DIESEL: "Diesel",
-  PREMIUM_PETROL: "Premium petrol",
-  CNG: "CNG",
-};
-
-type NormalizedTank = TankSetupInput & {
+type NormalizedTank = {
+  productType: ProductType;
   capacity: string;
   currentDip: string;
 };
@@ -30,16 +24,12 @@ export class SetupService {
       where: { id: userId },
       select: {
         id: true,
+        stationId: true,
         station: {
           include: {
             organization: true,
             tanks: {
-              include: {
-                product: true,
-              },
-              orderBy: {
-                createdAt: "asc",
-              },
+                            orderBy: { createdAt: "asc" },
             },
           },
         },
@@ -83,24 +73,6 @@ export class SetupService {
     }
 
     const station = await prisma.$transaction(async (transaction) => {
-      const products = await Promise.all(
-        [...new Set(tanks.map((tank) => tank.grade))].map((grade) =>
-          transaction.product.upsert({
-            where: { grade },
-            update: {
-              isActive: true,
-            },
-            create: {
-              grade,
-              name: productNames[grade],
-            },
-          }),
-        ),
-      );
-      const productsByGrade = new Map(
-        products.map((product) => [product.grade, product]),
-      );
-
       return transaction.station.create({
         data: {
           name: stationName,
@@ -113,47 +85,20 @@ export class SetupService {
             },
           },
           users: {
-            connect: {
-              id: userId,
-            },
+            connect: { id: userId },
           },
           tanks: {
-            create: tanks.map((tank) => {
-              const product = productsByGrade.get(tank.grade);
-
-              if (!product) {
-                throw new BadRequestException("Tank product is unavailable.");
-              }
-
-              return {
-                name: tank.name,
-                capacity: tank.capacity,
-                currentDip: tank.currentDip,
-                productId: product.id,
-                movements:
-                  Number(tank.currentDip) > 0
-                    ? {
-                        create: {
-                          productId: product.id,
-                          type: "DIP_ADJUSTMENT",
-                          quantity: tank.currentDip,
-                          note: "Station setup opening dip",
-                        },
-                      }
-                    : undefined,
-              };
-            }),
+            create: tanks.map((tank) => ({
+              productType: tank.productType,
+              capacity: tank.capacity,
+              currentDip: tank.currentDip,
+            })),
           },
         },
         include: {
           organization: true,
           tanks: {
-            include: {
-              product: true,
-            },
-            orderBy: {
-              createdAt: "asc",
-            },
+                        orderBy: { createdAt: "asc" },
           },
         },
       });
@@ -165,35 +110,30 @@ export class SetupService {
     };
   }
 
-  private normalizeTanks(tanks: TankSetupInput[] | undefined) {
+  private normalizeTanks(tanks: TankSetupInput[] | undefined): NormalizedTank[] {
     if (!Array.isArray(tanks) || tanks.length === 0) {
       throw new BadRequestException("Add at least one station tank.");
     }
 
     return tanks.map((tank, index): NormalizedTank => {
-      const name = this.requiredText(tank.name, `Tank ${index + 1} name`);
-      const capacity = this.positiveDecimal(tank.capacity, `${name} capacity`);
+      const label = `Tank ${index + 1}`;
+      const capacity = this.positiveDecimal(tank.capacity, `${label} capacity`);
       const currentDip = this.nonNegativeDecimal(
         tank.currentDip,
-        `${name} opening dip`,
+        `${label} opening dip`,
       );
 
-      if (!Object.values(FuelGrade).includes(tank.grade)) {
-        throw new BadRequestException(`${name} has an invalid fuel grade.`);
+      if (!Object.values(ProductType).includes(tank.productType)) {
+        throw new BadRequestException(`${label} has an invalid product type.`);
       }
 
       if (Number(currentDip) > Number(capacity)) {
         throw new BadRequestException(
-          `${name} opening dip cannot exceed capacity.`,
+          `${label} opening dip cannot exceed capacity.`,
         );
       }
 
-      return {
-        name,
-        grade: tank.grade,
-        capacity,
-        currentDip,
-      };
+      return { productType: tank.productType, capacity, currentDip };
     });
   }
 

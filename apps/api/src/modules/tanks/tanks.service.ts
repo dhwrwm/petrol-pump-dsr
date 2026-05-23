@@ -4,7 +4,14 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Decimal } from "../../generated/prisma/runtime/client.js";
+import { FuelGrade, ProductType } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
+
+const productTypeToGrade: Partial<Record<ProductType, FuelGrade>> = {
+  MS: FuelGrade.PETROL,
+  HSD: FuelGrade.DIESEL,
+  XP95: FuelGrade.PREMIUM_PETROL,
+};
 
 @Injectable()
 export class TanksService {
@@ -26,12 +33,7 @@ export class TanksService {
 
     return prisma.tank.findMany({
       where: { stationId },
-      include: {
-        product: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: { createdAt: "asc" },
     });
   }
 
@@ -40,7 +42,6 @@ export class TanksService {
 
     const tank = await prisma.tank.findUnique({
       where: { id: tankId },
-      include: { product: true },
     });
 
     if (!tank || tank.stationId !== stationId) {
@@ -63,18 +64,23 @@ export class TanksService {
       const updated = await tx.tank.update({
         where: { id: tankId },
         data: { currentDip: dipValue },
-        include: { product: true },
       });
 
-      await tx.inventoryMovement.create({
-        data: {
-          tankId,
-          productId: tank.productId,
-          type: "DIP_ADJUSTMENT",
-          quantity: adjustment,
-          note: "Manual dip adjustment",
-        },
-      });
+      const grade = productTypeToGrade[tank.productType];
+      if (grade) {
+        const product = await tx.product.findUnique({ where: { grade } });
+        if (product) {
+          await tx.inventoryMovement.create({
+            data: {
+              tankId,
+              productId: product.id,
+              type: "DIP_ADJUSTMENT",
+              quantity: adjustment,
+              note: "Manual dip adjustment",
+            },
+          });
+        }
+      }
 
       return updated;
     });

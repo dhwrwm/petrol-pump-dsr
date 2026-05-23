@@ -1,10 +1,13 @@
+import type { ProductType } from "../../generated/prisma/index.js";
+
 export type NozzleInput = {
-  label: string;
-  tankId: string;
+  productType: ProductType;
+  openingMeterReading: string;
+  date?: string;
 };
 
 export type CreateDispenserDto = {
-  name: string;
+  companyName: string;
   serialNo?: string;
   nozzles: NozzleInput[];
 };
