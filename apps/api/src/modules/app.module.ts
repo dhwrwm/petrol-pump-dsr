@@ -4,7 +4,7 @@ import { auth } from "../auth.js";
 import { CreditModule } from "./credit/credit.module.js";
 import { DispensersModule } from "./dispensers/dispensers.module.js";
 import { HealthModule } from "./health/health.module.js";
-import { PumpBoysModule } from "./pump-boys/pump-boys.module.js";
+import { EmployeesModule } from "./employees/employees.module.js";
 import { SalesModule } from "./sales/sales.module.js";
 import { SetupModule } from "./setup/setup.module.js";
 import { TanksModule } from "./tanks/tanks.module.js";
@@ -18,7 +18,7 @@ import { TanksModule } from "./tanks/tanks.module.js";
     CreditModule,
     DispensersModule,
     HealthModule,
-    PumpBoysModule,
+    EmployeesModule,
     SalesModule,
     SetupModule,
     TanksModule,

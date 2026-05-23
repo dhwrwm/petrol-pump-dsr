@@ -88,7 +88,7 @@ export function AppSidebar() {
           Credit
         </NavLink>
         <NavLink
-          to="/pump-boys"
+          to="/employees"
           className={({ isActive }) =>
             `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
@@ -98,7 +98,7 @@ export function AppSidebar() {
           }
         >
           <HardHat size={18} />
-          Pump Boys
+          Employees
         </NavLink>
         <NavLink
           to="/settings"

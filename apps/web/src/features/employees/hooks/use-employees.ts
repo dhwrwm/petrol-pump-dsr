@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { getPumpBoys } from "../api/pump-boys.api";
-import type { PumpBoy } from "../types/pump-boys.types";
+import { getEmployees } from "../api/employees.api";
+import type { Employee } from "../types/employees.types";
 
-export function usePumpBoys() {
-  const [pumpBoys, setPumpBoys] = useState<PumpBoy[]>([]);
+export function useEmployees() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
@@ -13,16 +13,16 @@ export function usePumpBoys() {
 
     setIsPending(true);
     setError("");
-    void getPumpBoys()
+    void getEmployees()
       .then((data) => {
-        if (isCurrent) setPumpBoys(data);
+        if (isCurrent) setEmployees(data);
       })
       .catch((requestError: unknown) => {
         if (isCurrent) {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : "Unable to load pump boys.",
+              : "Unable to load employees.",
           );
         }
       })
@@ -36,7 +36,7 @@ export function usePumpBoys() {
   }, [reloadToken]);
 
   return {
-    pumpBoys,
+    employees,
     error,
     isPending,
     refetch: () => setReloadToken((t) => t + 1),
