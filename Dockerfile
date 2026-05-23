@@ -65,7 +65,14 @@ COPY --from=build /app/packages/config/package.json ./packages/config/
 COPY --from=build /app/package.json ./
 COPY --from=build /app/pnpm-workspace.yaml ./
 
+# Copy Prisma schema + migrations (needed for migrate deploy at runtime)
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+
+# Copy entrypoint script
+COPY apps/api/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["./entrypoint.sh"]

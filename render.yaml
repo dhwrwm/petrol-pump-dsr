@@ -11,6 +11,8 @@ services:
         value: "4000"
       - key: DATABASE_URL
         sync: false
+      - key: DIRECT_URL
+        sync: false
       - key: BETTER_AUTH_SECRET
         sync: false
       - key: WEB_URL
