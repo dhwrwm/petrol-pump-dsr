@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { prisma } from "../../lib/prisma.js";
-import type { CreateDispenserDto } from "./dispensers.dto.js";
+import type { AddNozzleDto, CreateDispenserDto } from "./dispensers.dto.js";
 
 @Injectable()
 export class DispensersService {
@@ -84,6 +84,40 @@ export class DispensersService {
         },
       });
     });
+  }
+
+  async addNozzle(userId: string, dispenserId: string, input: AddNozzleDto) {
+    const stationId = await this.getStationId(userId);
+    const dispenser = await prisma.dispenser.findUnique({
+      where: { id: dispenserId },
+      select: { stationId: true },
+    });
+    if (!dispenser || dispenser.stationId !== stationId) {
+      throw new NotFoundException("Dispenser not found.");
+    }
+
+    return prisma.nozzle.create({
+      data: {
+        dispenserId,
+        productType: input.productType,
+        openingMeterReading: input.openingMeterReading,
+        date: input.date ? new Date(input.date) : new Date(),
+        dispensers: { connect: { id: dispenserId } },
+      },
+    });
+  }
+
+  async deleteNozzle(userId: string, dispenserId: string, nozzleId: string) {
+    const stationId = await this.getStationId(userId);
+    const dispenser = await prisma.dispenser.findUnique({
+      where: { id: dispenserId },
+      select: { stationId: true },
+    });
+    if (!dispenser || dispenser.stationId !== stationId) {
+      throw new NotFoundException("Dispenser not found.");
+    }
+    await prisma.nozzle.delete({ where: { id: nozzleId } });
+    return { deleted: true };
   }
 
   async delete(userId: string, dispenserId: string) {

@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useTanks } from "../../tanks/hooks/use-tanks";
+import { PRODUCT_LABELS } from "../../tanks/types/tanks.types";
 import {
   createDispenser,
   deleteDispenser,
@@ -270,7 +271,7 @@ export function SettingsPage() {
                       <option value="">Select tank</option>
                       {tanks.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {t.name} ({t.product.name})
+                          {t.productType}
                         </option>
                       ))}
                     </select>
@@ -427,9 +428,9 @@ export function SettingsPage() {
                   return (
                     <TableRow key={tank.id}>
                       <TableCell>
-                        <strong>{tank.name}</strong>
+                        <strong>{tank.productType}</strong>
                       </TableCell>
-                      <TableCell>{tank.product.name}</TableCell>
+                      <TableCell>{PRODUCT_LABELS[tank.productType]}</TableCell>
                       <TableCell>
                         {Number(tank.currentDip).toLocaleString("en-IN")} /{" "}
                         {Number(tank.capacity).toLocaleString("en-IN")} L
@@ -461,7 +462,7 @@ export function SettingsPage() {
                             editValue === undefined ||
                             editValue === ""
                           }
-                          aria-label={`Save dip for ${tank.name}`}
+                          aria-label={`Save dip for ${tank.productType}`}
                           onClick={() => handleDipSave(tank.id)}
                         >
                           <Save size={16} />

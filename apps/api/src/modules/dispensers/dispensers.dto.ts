@@ -11,3 +11,9 @@ export type CreateDispenserDto = {
   serialNo?: string;
   nozzles: NozzleInput[];
 };
+
+export type AddNozzleDto = {
+  productType: ProductType;
+  openingMeterReading: string;
+  date?: string;
+};
