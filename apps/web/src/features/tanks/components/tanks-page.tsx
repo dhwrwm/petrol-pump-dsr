@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { NavLink } from "react-router";
 import {
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Droplets,
   Gauge,
@@ -12,6 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Card,
   CardAction,
@@ -31,7 +34,20 @@ import {
   updateTankDip,
 } from "../api/tanks.api";
 import { useTanks } from "../hooks/use-tanks";
-import { PRODUCT_LABELS, type ProductType } from "../types/tanks.types";
+import { PRODUCT_LABELS, type DispenserBase, type ProductType, type TankNozzle } from "../types/tanks.types";
+
+function groupNozzlesByDispenser(
+  nozzles: TankNozzle[],
+): Array<DispenserBase & { nozzles: TankNozzle[] }> {
+  const map = new Map<string, DispenserBase & { nozzles: TankNozzle[] }>();
+  for (const nozzle of nozzles) {
+    if (!map.has(nozzle.dispenserId)) {
+      map.set(nozzle.dispenserId, { ...nozzle.dispenser, nozzles: [] });
+    }
+    map.get(nozzle.dispenserId)!.nozzles.push(nozzle);
+  }
+  return Array.from(map.values());
+}
 
 const PRODUCT_TYPES: ProductType[] = ["MS", "HSD", "XP95", "OTHERS"];
 
@@ -227,26 +243,28 @@ function AddDispenserForm({
 
 function AddNozzleForm({
   dispenserId,
+  tankId,
   onSuccess,
   onCancel,
 }: {
   dispenserId: string;
+  tankId: string;
   onSuccess: () => void;
   onCancel: () => void;
 }) {
   const [productType, setProductType] = useState<ProductType>("MS");
-  const [openingMeterReading, setOpeningMeterReading] = useState("");
+  const [nozzleNumber, setNozzleNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!openingMeterReading.trim()) return;
+    if (!nozzleNumber.trim()) return;
     setLoading(true);
     setError("");
     try {
-      await addNozzle(dispenserId, { productType, openingMeterReading: openingMeterReading.trim() });
-      setOpeningMeterReading("");
+      await addNozzle(dispenserId, { nozzleNumber: Number(nozzleNumber), productType, tankId });
+      setNozzleNumber("");
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add nozzle.");
@@ -270,15 +288,15 @@ function AddNozzleForm({
         </select>
       </div>
       <div className="grid gap-1">
-        <Label className="text-xs">Opening meter reading</Label>
+        <Label className="text-xs">Nozzle number</Label>
         <Input
           type="number"
-          min="0"
-          step="0.001"
-          value={openingMeterReading}
-          onChange={(e) => setOpeningMeterReading(e.target.value)}
-          placeholder="e.g. 12345.000"
-          className="h-8 text-sm w-40"
+          min="1"
+          step="1"
+          value={nozzleNumber}
+          onChange={(e) => setNozzleNumber(e.target.value)}
+          placeholder="e.g. 1"
+          className="h-8 text-sm w-24"
           required
         />
       </div>
@@ -301,8 +319,15 @@ export function TanksPage() {
   const [dispenserTankId, setDispenserTankId] = useState<string | null>(null);
   const [nozzleDispenserId, setNozzleDispenserId] = useState<string | null>(null);
   const [collapsedTanks, setCollapsedTanks] = useState<Set<string>>(new Set());
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
+
+  type PendingDelete =
+    | { kind: "tank"; id: string }
+    | { kind: "dispenser"; id: string }
+    | { kind: "nozzle"; dispenserId: string; nozzleId: string };
+
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const totalCapacity = tanks.reduce((sum, t) => sum + Number(t.capacity), 0);
   const totalStock = tanks.reduce((sum, t) => sum + Number(t.currentDip), 0);
@@ -317,56 +342,56 @@ export function TanksPage() {
     });
   }
 
-  async function handleDeleteTank(id: string) {
-    if (!confirm("Delete this tank and all its dispensers?")) return;
-    setDeletingId(id);
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
     setActionError("");
     try {
-      await deleteTank(id);
+      if (pendingDelete.kind === "tank") {
+        await deleteTank(pendingDelete.id);
+      } else if (pendingDelete.kind === "dispenser") {
+        await deleteDispenser(pendingDelete.id);
+      } else {
+        await deleteNozzle(pendingDelete.dispenserId, pendingDelete.nozzleId);
+      }
+      setPendingDelete(null);
       refetch();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to delete tank.");
+      setActionError(err instanceof Error ? err.message : "Delete failed.");
     } finally {
-      setDeletingId(null);
+      setDeleting(false);
     }
   }
 
-  async function handleDeleteDispenser(id: string) {
-    if (!confirm("Delete this dispenser and all its nozzles?")) return;
-    setDeletingId(id);
-    setActionError("");
-    try {
-      await deleteDispenser(id);
-      refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to delete dispenser.");
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  async function handleDeleteNozzle(dispenserId: string, nozzleId: string) {
-    if (!confirm("Delete this nozzle?")) return;
-    setDeletingId(nozzleId);
-    setActionError("");
-    try {
-      await deleteNozzle(dispenserId, nozzleId);
-      refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to delete nozzle.");
-    } finally {
-      setDeletingId(null);
-    }
-  }
+  const deleteDialogProps = pendingDelete
+    ? pendingDelete.kind === "tank"
+      ? { title: "Delete tank?", description: "This will permanently delete the tank and all its dispensers and nozzles." }
+      : pendingDelete.kind === "dispenser"
+        ? { title: "Delete dispenser?", description: "This will permanently delete the dispenser and all its nozzles." }
+        : { title: "Delete nozzle?", description: "This nozzle will be permanently removed." }
+    : null;
 
   return (
     <>
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={deleteDialogProps?.title ?? ""}
+        description={deleteDialogProps?.description}
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
       <header className="flex justify-between items-center gap-4 max-md:flex-col max-md:items-start">
         <div>
-          <p className="mb-1 text-xs font-bold uppercase text-muted-foreground tracking-wide">
-            Inventory
-          </p>
-          <h1 className="text-3xl font-bold">Tanks</h1>
+          <NavLink
+            to="/settings"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-1 no-underline"
+          >
+            <ChevronLeft size={12} />
+            Settings
+          </NavLink>
+          <h1 className="text-3xl font-bold">Inventory Management</h1>
         </div>
         <div className="flex gap-2.5">
           <Button
@@ -447,6 +472,7 @@ export function TanksPage() {
             const dip = Number(tank.currentDip);
             const level = capacity > 0 ? Math.round((dip / capacity) * 100) : 0;
             const isCollapsed = collapsedTanks.has(tank.id);
+            const dispensers = groupNozzlesByDispenser(tank.nozzles);
 
             return (
               <article key={tank.id} className="border rounded-lg overflow-hidden">
@@ -497,8 +523,7 @@ export function TanksPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-destructive hover:text-destructive"
-                      disabled={deletingId === tank.id}
-                      onClick={() => handleDeleteTank(tank.id)}
+                      onClick={() => setPendingDelete({ kind: "tank", id: tank.id })}
                       aria-label="Delete tank"
                     >
                       <Trash2 size={14} />
@@ -521,11 +546,11 @@ export function TanksPage() {
                 {/* Dispensers section */}
                 {!isCollapsed && (
                   <div className="px-4 py-3 grid gap-3">
-                    {tank.dispensers.length === 0 && dispenserTankId !== tank.id && (
+                    {dispensers.length === 0 && dispenserTankId !== tank.id && (
                       <p className="text-xs text-muted-foreground">No dispensers assigned to this tank.</p>
                     )}
 
-                    {tank.dispensers.map((dispenser) => (
+                    {dispensers.map((dispenser) => (
                       <div key={dispenser.id} className="border rounded-md overflow-hidden">
                         {/* Dispenser header */}
                         <div className="flex items-center gap-2 px-3 py-2 bg-muted/20">
@@ -546,8 +571,7 @@ export function TanksPage() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 text-destructive hover:text-destructive"
-                            disabled={deletingId === dispenser.id}
-                            onClick={() => handleDeleteDispenser(dispenser.id)}
+                            onClick={() => setPendingDelete({ kind: "dispenser", id: dispenser.id })}
                             aria-label="Delete dispenser"
                           >
                             <Trash2 size={12} />
@@ -560,12 +584,9 @@ export function TanksPage() {
                             <div key={nozzle.id} className="flex items-center gap-2 text-xs">
                               <Zap size={12} className="text-muted-foreground shrink-0" />
                               <span className="flex-1">
-                                <span className="font-medium">{PRODUCT_LABELS[nozzle.productType]}</span>
+                                <span className="font-medium">#{nozzle.nozzleNumber}</span>
                                 <span className="text-muted-foreground ml-1.5">
-                                  Opening: {Number(nozzle.openingMeterReading).toLocaleString("en-IN")}
-                                  {nozzle.closingMeterReading && (
-                                    <> · Closing: {Number(nozzle.closingMeterReading).toLocaleString("en-IN")}</>
-                                  )}
+                                  {PRODUCT_LABELS[nozzle.productType]}
                                 </span>
                               </span>
                               <Button
@@ -573,8 +594,7 @@ export function TanksPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-5 w-5 text-destructive hover:text-destructive"
-                                disabled={deletingId === nozzle.id}
-                                onClick={() => handleDeleteNozzle(dispenser.id, nozzle.id)}
+                                onClick={() => setPendingDelete({ kind: "nozzle", dispenserId: dispenser.id, nozzleId: nozzle.id })}
                                 aria-label="Delete nozzle"
                               >
                                 <Trash2 size={11} />
@@ -585,6 +605,7 @@ export function TanksPage() {
                           {nozzleDispenserId === dispenser.id ? (
                             <AddNozzleForm
                               dispenserId={dispenser.id}
+                              tankId={tank.id}
                               onSuccess={() => { setNozzleDispenserId(null); refetch(); }}
                               onCancel={() => setNozzleDispenserId(null)}
                             />

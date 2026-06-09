@@ -31,7 +31,6 @@ export class DispensersService {
           include: { calibrationRenewals: true },
           orderBy: { createdAt: "asc" },
         },
-        tanks: true,
       },
       orderBy: { createdAt: "asc" },
     });
@@ -64,10 +63,9 @@ export class DispensersService {
           tx.nozzle.create({
             data: {
               dispenserId: dispenser.id,
+              nozzleNumber: n.nozzleNumber,
               productType: n.productType,
-              openingMeterReading: n.openingMeterReading,
-              date: n.date ? new Date(n.date) : new Date(),
-              dispensers: { connect: { id: dispenser.id } },
+              tankId: n.tankId,
             },
           }),
         ),
@@ -80,7 +78,6 @@ export class DispensersService {
             include: { calibrationRenewals: true },
             orderBy: { createdAt: "asc" },
           },
-          tanks: true,
         },
       });
     });
@@ -99,10 +96,9 @@ export class DispensersService {
     return prisma.nozzle.create({
       data: {
         dispenserId,
+        nozzleNumber: input.nozzleNumber,
         productType: input.productType,
-        openingMeterReading: input.openingMeterReading,
-        date: input.date ? new Date(input.date) : new Date(),
-        dispensers: { connect: { id: dispenserId } },
+        tankId: input.tankId,
       },
     });
   }

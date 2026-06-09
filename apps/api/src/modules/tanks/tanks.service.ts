@@ -4,18 +4,12 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Decimal } from "../../generated/prisma/runtime/client.js";
-import { FuelGrade, ProductType } from "../../generated/prisma/index.js";
 import { prisma } from "../../lib/prisma.js";
 import type { AddDispenserToTankDto, CreateTankDto } from "./tanks.dto.js";
 
-const productTypeToGrade: Partial<Record<ProductType, FuelGrade>> = {
-  MS: FuelGrade.PETROL,
-  HSD: FuelGrade.DIESEL,
-  XP95: FuelGrade.PREMIUM_PETROL,
-};
-
-const dispenserInclude = {
-  nozzles: { orderBy: { createdAt: "asc" as const } },
+const nozzleInclude = {
+  include: { dispenser: true },
+  orderBy: { createdAt: "asc" as const },
 } as const;
 
 @Injectable()
@@ -46,12 +40,7 @@ export class TanksService {
     const stationId = await this.getStationId(userId);
     return prisma.tank.findMany({
       where: { stationId },
-      include: {
-        dispensers: {
-          include: dispenserInclude,
-          orderBy: { createdAt: "asc" },
-        },
-      },
+      include: { nozzles: nozzleInclude },
       orderBy: { createdAt: "asc" },
     });
   }
@@ -73,15 +62,8 @@ export class TanksService {
     }
 
     return prisma.tank.create({
-      data: {
-        stationId,
-        productType: input.productType,
-        capacity,
-        currentDip,
-      },
-      include: {
-        dispensers: { include: dispenserInclude },
-      },
+      data: { stationId, productType: input.productType, capacity, currentDip },
+      include: { nozzles: nozzleInclude },
     });
   }
 
@@ -109,9 +91,8 @@ export class TanksService {
         stationId,
         companyName: input.companyName.trim(),
         serialNo: input.serialNo?.trim() || null,
-        tanks: { connect: { id: tankId } },
       },
-      include: dispenserInclude,
+      include: { nozzles: { orderBy: { createdAt: "asc" } } },
     });
   }
 
@@ -132,34 +113,10 @@ export class TanksService {
       throw new BadRequestException("Dip reading cannot exceed tank capacity.");
     }
 
-    const adjustment = dipValue.minus(tank.currentDip);
-
-    return prisma.$transaction(async (tx) => {
-      const updated = await tx.tank.update({
-        where: { id: tankId },
-        data: { currentDip: dipValue },
-        include: {
-          dispensers: { include: dispenserInclude },
-        },
-      });
-
-      const grade = productTypeToGrade[tank.productType];
-      if (grade) {
-        const product = await tx.product.findUnique({ where: { grade } });
-        if (product) {
-          await tx.inventoryMovement.create({
-            data: {
-              tankId,
-              productId: product.id,
-              type: "DIP_ADJUSTMENT",
-              quantity: adjustment,
-              note: "Manual dip adjustment",
-            },
-          });
-        }
-      }
-
-      return updated;
+    return prisma.tank.update({
+      where: { id: tankId },
+      data: { currentDip: dipValue },
+      include: { nozzles: nozzleInclude },
     });
   }
 }

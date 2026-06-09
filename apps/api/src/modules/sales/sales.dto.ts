@@ -1,10 +1,18 @@
+export type PaymentInput = {
+  method: "CASH" | "UPI" | "CARD" | "CREDIT" | "FLEET_CARD";
+  amount: string;
+  reference?: string;
+};
+
 export type CreateSaleDto = {
-  shiftId: string;
   nozzleId: string;
-  productId: string;
-  customerId?: string;
-  liters: string;
+  openingMeter: string;
+  closingMeter: string;
   rate: string;
-  paymentMethod?: "CASH" | "UPI" | "CARD" | "CREDIT" | "FLEET_CARD";
-  paymentReference?: string;
+  payments: PaymentInput[];
+};
+
+export type UpdateSaleDto = {
+  closingMeter: string;
+  payments: PaymentInput[];
 };

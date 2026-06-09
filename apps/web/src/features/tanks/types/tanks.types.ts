@@ -10,22 +10,24 @@ export const PRODUCT_LABELS: Record<ProductType, string> = {
 export type Nozzle = {
   id: string;
   dispenserId: string;
+  tankId: string;
+  nozzleNumber: number;
   productType: ProductType;
-  openingMeterReading: string;
-  closingMeterReading: string | null;
-  nozzleTestingLiters: string;
-  date: string;
+  isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 };
 
-export type Dispenser = {
+export type DispenserBase = {
   id: string;
   stationId: string;
   companyName: string;
   serialNo: string | null;
-  nozzles: Nozzle[];
   createdAt: string;
+  updatedAt: string;
 };
+
+export type TankNozzle = Nozzle & { dispenser: DispenserBase };
 
 export type Tank = {
   id: string;
@@ -33,6 +35,6 @@ export type Tank = {
   productType: ProductType;
   capacity: string;
   currentDip: string;
-  dispensers: Dispenser[];
+  nozzles: TankNozzle[];
   createdAt: string;
 };

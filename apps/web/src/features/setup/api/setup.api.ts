@@ -1,7 +1,7 @@
 import { apiRequest } from "../../../lib/api-client";
-import {
-  type CreateStationSetupInput,
-  type StationSetupState,
+import type {
+  CreateStationSetupInput,
+  StationSetupState,
 } from "../types/setup.types";
 
 export function getStationSetup() {
@@ -11,6 +11,13 @@ export function getStationSetup() {
 export function createStationSetup(input: CreateStationSetupInput) {
   return apiRequest<StationSetupState>("/api/setup/station", {
     method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateStationSettings(input: { shiftsPerDay: number }) {
+  return apiRequest<{ id: string; shiftsPerDay: number }>("/api/setup/station/settings", {
+    method: "PATCH",
     body: JSON.stringify(input),
   });
 }

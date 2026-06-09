@@ -42,8 +42,8 @@ export function ShiftDashboard() {
 
   const tanks = station.tanks.map(
     (tank): TankSummary => ({
-      name: tank.name,
-      fuel: tank.product.name,
+      name: tank.productType,
+      fuel: tank.productType,
       level: Math.round(
         (Number(tank.currentDip) / Number(tank.capacity)) * 100,
       ),
@@ -164,8 +164,8 @@ export function ShiftDashboard() {
                 ) : (
                   sales.slice(0, 10).map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell>{sale.nozzle.label}</TableCell>
-                      <TableCell>{sale.product.name}</TableCell>
+                      <TableCell>Nozzle #{sale.nozzle.nozzleNumber}</TableCell>
+                      <TableCell>{sale.productType}</TableCell>
                       <TableCell>{Number(sale.liters).toFixed(3)}</TableCell>
                       <TableCell className="max-md:hidden">
                         ₹{formatINR(Number(sale.amount))}

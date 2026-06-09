@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, Req } from "@nestjs/common";
 import {
   getRequiredSession,
   type RequestHeaders,
 } from "../../lib/auth-session.js";
-import { CreateSaleDto } from "./sales.dto.js";
+import { CreateSaleDto, UpdateSaleDto } from "./sales.dto.js";
 import { SalesService } from "./sales.service.js";
 
 @Controller("sales")
@@ -21,6 +21,22 @@ export class SalesController {
     return this.salesService.summary(session.user.id, validPeriod);
   }
 
+  @Get("current-shift")
+  async currentShift(@Req() request: RequestHeaders) {
+    const session = await getRequiredSession(request);
+    return this.salesService.getCurrentShift(session.user.id);
+  }
+
+  @Get("nozzle-meter")
+  async nozzleMeter(
+    @Req() request: RequestHeaders,
+    @Query("nozzleId") nozzleId: string,
+  ) {
+    await getRequiredSession(request);
+
+    return this.salesService.getLastMeterReading(nozzleId);
+  }
+
   @Get()
   async list(
     @Req() request: RequestHeaders,
@@ -33,8 +49,19 @@ export class SalesController {
 
   @Post()
   async create(@Req() request: RequestHeaders, @Body() input: CreateSaleDto) {
-    await getRequiredSession(request);
+    const session = await getRequiredSession(request);
 
-    return this.salesService.create(input);
+    return this.salesService.create(session.user.id, input);
+  }
+
+  @Patch(":id")
+  async update(
+    @Req() request: RequestHeaders,
+    @Param("id") id: string,
+    @Body() input: UpdateSaleDto,
+  ) {
+    const session = await getRequiredSession(request);
+
+    return this.salesService.update(id, session.user.id, input);
   }
 }

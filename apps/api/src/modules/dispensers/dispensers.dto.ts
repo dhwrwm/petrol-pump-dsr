@@ -1,9 +1,9 @@
 import type { ProductType } from "../../generated/prisma/index.js";
 
 export type NozzleInput = {
+  nozzleNumber: number;
   productType: ProductType;
-  openingMeterReading: string;
-  date?: string;
+  tankId: string;
 };
 
 export type CreateDispenserDto = {
@@ -13,7 +13,7 @@ export type CreateDispenserDto = {
 };
 
 export type AddNozzleDto = {
+  nozzleNumber: number;
   productType: ProductType;
-  openingMeterReading: string;
-  date?: string;
+  tankId: string;
 };

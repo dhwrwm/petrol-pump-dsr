@@ -1,5 +1,4 @@
 import {
-  Droplets,
   Fuel,
   Gauge,
   HardHat,
@@ -35,7 +34,7 @@ export function AppSidebar() {
           <LayoutDashboard size={18} />
           Dashboard
         </NavLink>
-        <NavLink
+        {/* <NavLink
           to="/shifts"
           className={({ isActive }) =>
             `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
@@ -47,7 +46,7 @@ export function AppSidebar() {
         >
           <Gauge size={18} />
           Shift
-        </NavLink>
+        </NavLink> */}
         <NavLink
           to="/sales"
           className={({ isActive }) =>
@@ -60,19 +59,6 @@ export function AppSidebar() {
         >
           <ReceiptText size={18} />
           Sales
-        </NavLink>
-        <NavLink
-          to="/tanks"
-          className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
-              isActive
-                ? "bg-brand-800 text-white"
-                : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
-            }`
-          }
-        >
-          <Droplets size={18} />
-          Tanks
         </NavLink>
         <NavLink
           to="/credit"

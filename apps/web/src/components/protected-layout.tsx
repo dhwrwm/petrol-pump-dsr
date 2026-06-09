@@ -33,7 +33,7 @@ export function ProtectedLayout() {
     return <AuthPage onAuthenticated={refetch} />;
   }
 
-  if (!stationSetup.state?.station) {
+  if (stationSetup.state?.requiresSetup || !stationSetup.state?.station) {
     return (
       <StationSetupPage
         statusError={stationSetup.error}

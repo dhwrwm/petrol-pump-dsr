@@ -1,4 +1,6 @@
-import { ReceiptText, RefreshCw } from "lucide-react";
+import { Pencil, ReceiptText, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useOutletContext } from "react-router";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { LayoutContext } from "../../../components/protected-layout";
+import type { ProductType } from "../../setup/types/setup.types";
+import { DailyRatesCard, useTodayRates } from "../../fuel-rates";
+import type { CurrentShift, Sale } from "../../shift/types/shift.types";
+import { getCurrentShift } from "../api/sales.api";
 import { useSales } from "../hooks/use-sales";
+import { SalesForm } from "./sales-form";
 
 function formatINR(value: number) {
   return value.toLocaleString("en-IN", {
@@ -35,7 +43,48 @@ function formatTime(iso: string) {
 }
 
 export function SalesPage() {
+  const { station } = useOutletContext<LayoutContext>();
+  const [addSaleOpen, setAddSaleOpen] = useState(false);
+  const [editSale, setEditSale] = useState<Sale | null>(null);
+  const [currentShift, setCurrentShift] = useState<CurrentShift | null>(null);
   const { sales, isPending, error, refetch } = useSales();
+  const { rates, isPending: ratesPending, isSaving, error: ratesError, save } =
+    useTodayRates();
+
+  useEffect(() => {
+    void getCurrentShift().then(setCurrentShift).catch(() => setCurrentShift(null));
+  }, []);
+
+  // Unique product types that have active nozzles at this station
+  const requiredTypes = [
+    ...new Set(
+      station.tanks.flatMap((t) =>
+        t.nozzles.filter((n) => n.isActive).map((n) => n.productType),
+      ),
+    ),
+  ] as ProductType[];
+
+  const ratesComplete =
+    !ratesPending &&
+    requiredTypes.every((pt) => rates.some((r) => r.productType === pt));
+
+  const usedNozzleIds = currentShift
+    ? sales.filter((s) => s.shiftId === currentShift.id).map((s) => s.nozzleId)
+    : [];
+
+  const formOpen = addSaleOpen || editSale !== null;
+
+  const openAddSale = () => setAddSaleOpen(true);
+
+  const closeForm = () => {
+    setAddSaleOpen(false);
+    setEditSale(null);
+  };
+
+  const handleSaved = () => {
+    refetch();
+    void getCurrentShift().then(setCurrentShift).catch(() => setCurrentShift(null));
+  };
 
   const totalAmount = sales.reduce((sum, s) => sum + Number(s.amount), 0);
   const totalLiters = sales.reduce((sum, s) => sum + Number(s.liters), 0);
@@ -61,6 +110,41 @@ export function SalesPage() {
           </Button>
         </div>
       </header>
+
+      <DailyRatesCard
+        requiredTypes={requiredTypes}
+        rates={rates}
+        isSaving={isSaving}
+        error={ratesError}
+        onSave={save}
+      />
+
+      <div className="flex items-center gap-3">
+        <Button
+          onClick={openAddSale}
+          disabled={!ratesComplete || formOpen}
+          title={!ratesComplete ? "Set today's rates first" : undefined}
+        >
+          Add Sale
+        </Button>
+        {!ratesComplete && !ratesPending && (
+          <p className="text-sm text-muted-foreground">
+            Set today's rates above to enable sales entry.
+          </p>
+        )}
+      </div>
+
+      {formOpen && (
+        <SalesForm
+          station={station}
+          rates={rates}
+          shift={currentShift}
+          usedNozzleIds={usedNozzleIds}
+          editSale={editSale ?? undefined}
+          onClose={closeForm}
+          onSaved={handleSaved}
+        />
+      )}
 
       {error && (
         <Alert variant="destructive">
@@ -115,13 +199,14 @@ export function SalesPage() {
                   <TableHead>Liters</TableHead>
                   <TableHead className="max-md:hidden">Amount</TableHead>
                   <TableHead className="max-md:hidden">Mode</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sales.map((sale) => (
                   <TableRow key={sale.id}>
-                    <TableCell>{sale.nozzle.label}</TableCell>
-                    <TableCell>{sale.product.name}</TableCell>
+                    <TableCell>Nozzle #{sale.nozzle.nozzleNumber}</TableCell>
+                    <TableCell>{sale.productType}</TableCell>
                     <TableCell>{Number(sale.liters).toFixed(3)}</TableCell>
                     <TableCell className="max-md:hidden">
                       ₹{formatINR(Number(sale.amount))}
@@ -131,6 +216,16 @@ export function SalesPage() {
                       title={formatTime(sale.soldAt)}
                     >
                       {sale.payments[0]?.method ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        aria-label="Edit sale"
+                        onClick={() => setEditSale(sale)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Pencil size={15} />
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))}

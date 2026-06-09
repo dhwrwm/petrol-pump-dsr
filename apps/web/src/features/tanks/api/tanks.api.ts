@@ -1,5 +1,5 @@
 import { apiRequest } from "../../../lib/api-client";
-import type { Dispenser, Nozzle, Tank } from "../types/tanks.types";
+import type { Tank, TankNozzle } from "../types/tanks.types";
 
 export function getTanks() {
   return apiRequest<Tank[]>("/api/tanks");
@@ -33,7 +33,7 @@ export function addDispenserToTank(
   tankId: string,
   input: { companyName: string; serialNo?: string },
 ) {
-  return apiRequest<Dispenser>(`/api/tanks/${tankId}/dispensers`, {
+  return apiRequest<{ id: string; companyName: string; serialNo: string | null }>(`/api/tanks/${tankId}/dispensers`, {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -47,9 +47,9 @@ export function deleteDispenser(id: string) {
 
 export function addNozzle(
   dispenserId: string,
-  input: { productType: string; openingMeterReading: string },
+  input: { nozzleNumber: number; productType: string; tankId: string },
 ) {
-  return apiRequest<Nozzle>(`/api/dispensers/${dispenserId}/nozzles`, {
+  return apiRequest<TankNozzle>(`/api/dispensers/${dispenserId}/nozzles`, {
     method: "POST",
     body: JSON.stringify(input),
   });

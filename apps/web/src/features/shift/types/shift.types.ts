@@ -9,16 +9,22 @@ export type Sale = {
   id: string;
   shiftId: string;
   nozzleId: string;
-  productId: string;
+  productType: string;
   customerId: string | null;
   liters: string;
   rate: string;
   amount: string;
   soldAt: string;
-  product: { id: string; grade: string; name: string; unit: string };
-  nozzle: { id: string; label: string };
+  nozzle: { id: string; nozzleNumber: number; productType: string };
   customer: { id: string; name: string } | null;
   payments: SalePayment[];
+  meterReading: { openingMeter: string; closingMeter: string | null };
+};
+
+export type CurrentShift = {
+  id: string;
+  openedAt: string;
+  shiftNumber: number;
 };
 
 export type TankSummary = {

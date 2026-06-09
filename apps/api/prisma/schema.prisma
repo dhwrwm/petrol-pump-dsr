@@ -28,14 +28,6 @@ enum PaymentMethod {
   FLEET_CARD
 }
 
-enum InventoryMovementType {
-  PURCHASE
-  DIP_ADJUSTMENT
-  CALIBRATION
-  LOSS
-  TRANSFER
-}
-
 enum DocumentType {
   AADHAR
   PAN
@@ -130,6 +122,8 @@ model Station {
   name           String
   code           String           @unique
   address        String?
+  shiftsPerDay   Int              @default(2)
+  setupComplete  Boolean          @default(false)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -141,33 +135,7 @@ model Station {
   customers      CreditCustomer[]
   expenses       Expense[]
   employees      Employee[]
-}
-
-model Product {
-  id        String     @id @default(cuid())
-  grade     FuelGrade  @unique
-  name      String
-  unit      String     @default("L")
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  prices    Price[]
-  sales     Sale[]
-  movements InventoryMovement[]
-}
-
-model Price {
-  id          String    @id @default(cuid())
-  productId   String
-  stationId   String
-  effectiveAt DateTime
-  amount      Decimal   @db.Decimal(12, 2)
-  createdAt   DateTime  @default(now())
-
-  product     Product   @relation(fields: [productId], references: [id])
-
-  @@unique([productId, stationId, effectiveAt])
+  fuelRates      FuelRate[]
 }
 
 model Tank {
@@ -180,7 +148,8 @@ model Tank {
 
   station     Station             @relation(fields: [stationId], references: [id])
   productType ProductType         @default(MS)
-  dispensers  Dispenser[]
+
+  nozzles Nozzle[]
 }
 
 model Dispenser {
@@ -192,25 +161,33 @@ model Dispenser {
   updatedAt DateTime  @updatedAt
 
   station   Station   @relation(fields: [stationId], references: [id])
-  nozzles   Nozzle[]
 
-  tanks Tank[]
+  // Relations
+  nozzles   Nozzle[]
 }
 
 model Nozzle {
   id          String         @id @default(cuid())
-  dispenserId String
-  date    DateTime       @default(now())
+  nozzleNumber Int
   productType ProductType
+  isActive     Boolean     @default(true)
+
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt 
-  openingMeterReading Decimal        @db.Decimal(14, 3)
-  closingMeterReading Decimal?       @db.Decimal(14, 3)
-  nozzleTestingLiters Decimal        @default(0) @db.Decimal(12, 3)
+
   calibrationRenewals CalibrationRenewal[]
+  sales Sale[]
 
+  //Foreign key to Tank
+  tankId String
+  tank   Tank      @relation(fields: [tankId], references: [id])
 
-  dispensers Dispenser[]
+  //Foreign key to Dispenser
+  dispenserId String
+  dispenser    Dispenser   @relation(fields: [dispenserId], references: [id])
+
+   @@unique([dispenserId, nozzleNumber])
+  meterReadings MeterReading[]
 }
 
 model CalibrationRenewal {
@@ -249,7 +226,6 @@ model Shift {
 model MeterReading {
   id           String    @id @default(cuid())
   shiftId      String
-  nozzleId     String
   openingMeter Decimal   @db.Decimal(14, 3)
   closingMeter Decimal?  @db.Decimal(14, 3)
   testingLiters Decimal  @default(0) @db.Decimal(12, 3)
@@ -258,25 +234,35 @@ model MeterReading {
 
   shift        Shift     @relation(fields: [shiftId], references: [id])
 
+  nozzleId     String
+  nozzle       Nozzle    @relation(fields: [nozzleId], references: [id])
+
   @@unique([shiftId, nozzleId])
+  sales Sale[]
 }
 
 model Sale {
   id          String          @id @default(cuid())
   shiftId     String
-  nozzleId    String
-  productId   String
   customerId  String?
   liters      Decimal         @db.Decimal(12, 3)
   rate        Decimal         @db.Decimal(12, 2)
   amount      Decimal         @db.Decimal(12, 2)
   soldAt      DateTime        @default(now())
   createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  productType ProductType       @default(MS)
 
   shift       Shift           @relation(fields: [shiftId], references: [id])
-  product     Product         @relation(fields: [productId], references: [id])
   customer    CreditCustomer? @relation(fields: [customerId], references: [id])
   payments    Payment[]
+
+  nozzleId     String
+  nozzle       Nozzle    @relation(fields: [nozzleId], references: [id])
+
+  meterReadingId String
+  meterReading   MeterReading @relation(fields: [meterReadingId], references: [id])
 }
 
 model Payment {
@@ -320,19 +306,6 @@ model Expense {
 
   station     Station   @relation(fields: [stationId], references: [id])
   shift       Shift?    @relation(fields: [shiftId], references: [id])
-}
-
-model InventoryMovement {
-  id        String                @id @default(cuid())
-  tankId    String
-  productId String
-  type      InventoryMovementType
-  quantity  Decimal               @db.Decimal(12, 3)
-  note      String?
-  movedAt   DateTime              @default(now())
-  createdAt DateTime              @default(now())
-
-  product   Product               @relation(fields: [productId], references: [id])
 }
 
 model Employee {
@@ -379,6 +352,20 @@ model SalaryRecord {
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, month])
+}
+
+model FuelRate {
+  id            String      @id @default(cuid())
+  stationId     String
+  productType   ProductType
+  rate          Decimal     @db.Decimal(12, 2)
+  effectiveDate DateTime    @db.Date
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  station       Station     @relation(fields: [stationId], references: [id])
+
+  @@unique([stationId, productType, effectiveDate])
 }
 
 model NozzleAssignment {

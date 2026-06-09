@@ -1,15 +1,25 @@
-export type FuelGrade = "PETROL" | "DIESEL" | "PREMIUM_PETROL" | "CNG";
+export type ProductType = "MS" | "HSD" | "XP95" | "OTHERS";
+
+export const PRODUCT_LABELS: Record<ProductType, string> = {
+  MS: "Petrol (MS)",
+  HSD: "Diesel (HSD)",
+  XP95: "Premium (XP95)",
+  OTHERS: "Other",
+};
+
+export type StationNozzle = {
+  id: string;
+  nozzleNumber: number;
+  productType: ProductType;
+  isActive: boolean;
+};
 
 export type StationTank = {
   id: string;
-  name: string;
+  productType: ProductType;
   capacity: string;
   currentDip: string;
-  product: {
-    id: string;
-    grade: FuelGrade;
-    name: string;
-  };
+  nozzles: StationNozzle[];
 };
 
 export type StationSetup = {
@@ -17,6 +27,8 @@ export type StationSetup = {
   name: string;
   code: string;
   address: string | null;
+  shiftsPerDay: number;
+  setupComplete: boolean;
   organization: {
     id: string;
     name: string;
@@ -30,11 +42,23 @@ export type StationSetupState = {
   station: StationSetup | null;
 };
 
+// Form input types
 export type TankSetupInput = {
-  name: string;
-  grade: FuelGrade;
+  productType: ProductType;
   capacity: string;
   currentDip: string;
+};
+
+export type DispenserSetupInput = {
+  companyName: string;
+  serialNo: string;
+};
+
+export type NozzleSetupInput = {
+  nozzleNumber: string;
+  productType: ProductType;
+  tankIndex: number;
+  dispenserIndex: number;
 };
 
 export type CreateStationSetupInput = {
@@ -44,4 +68,11 @@ export type CreateStationSetupInput = {
   stationCode: string;
   address?: string;
   tanks: TankSetupInput[];
+  dispensers: DispenserSetupInput[];
+  nozzles: Array<{
+    nozzleNumber: number;
+    productType: ProductType;
+    tankIndex: number;
+    dispenserIndex: number;
+  }>;
 };

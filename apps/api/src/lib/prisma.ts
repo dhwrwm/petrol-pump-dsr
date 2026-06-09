@@ -11,6 +11,7 @@ export const prisma =
   new PrismaClient({
     adapter: new PrismaPg({
       connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
     }),
     log:
       process.env.NODE_ENV === "development"
