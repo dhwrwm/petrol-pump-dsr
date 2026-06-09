@@ -68,9 +68,23 @@ export function SalesPage() {
     !ratesPending &&
     requiredTypes.every((pt) => rates.some((r) => r.productType === pt));
 
-  const usedNozzleIds = currentShift
-    ? sales.filter((s) => s.shiftId === currentShift.id).map((s) => s.nozzleId)
+  const todaySales = currentShift
+    ? sales.filter((s) => s.shiftId === currentShift.id)
     : [];
+
+  const usedNozzleIds = todaySales.map((s) => s.nozzleId);
+
+  // If no sales entered today, allow editing the most recent previous shift
+  const canEditPrevious = !isPending && todaySales.length === 0;
+  const previousShiftId = canEditPrevious
+    ? sales.find((s) => !currentShift || s.shiftId !== currentShift.id)?.shiftId
+    : undefined;
+
+  const isSaleEditable = (sale: Sale) => {
+    if (currentShift && sale.shiftId === currentShift.id) return true;
+    if (canEditPrevious && sale.shiftId === previousShiftId) return true;
+    return false;
+  };
 
   const formOpen = addSaleOpen || editSale !== null;
 
@@ -111,13 +125,15 @@ export function SalesPage() {
         </div>
       </header>
 
-      <DailyRatesCard
-        requiredTypes={requiredTypes}
-        rates={rates}
-        isSaving={isSaving}
-        error={ratesError}
-        onSave={save}
-      />
+      {!ratesComplete && (
+        <DailyRatesCard
+          requiredTypes={requiredTypes}
+          rates={rates}
+          isSaving={isSaving}
+          error={ratesError}
+          onSave={save}
+        />
+      )}
 
       <div className="flex items-center gap-3">
         <Button
@@ -185,6 +201,11 @@ export function SalesPage() {
           </CardAction>
         </CardHeader>
         <CardContent className="px-4">
+          {canEditPrevious && previousShiftId && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-3">
+              No sales entered today — previous shift data is editable for corrections.
+            </p>
+          )}
           {sales.length === 0 && !isPending ? (
             <div className="grid gap-2 justify-items-center content-center min-h-[40vh] text-muted-foreground">
               <ReceiptText size={32} />
@@ -218,14 +239,16 @@ export function SalesPage() {
                       {sale.payments[0]?.method ?? "—"}
                     </TableCell>
                     <TableCell>
-                      <button
-                        type="button"
-                        aria-label="Edit sale"
-                        onClick={() => setEditSale(sale)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil size={15} />
-                      </button>
+                      {isSaleEditable(sale) && (
+                        <button
+                          type="button"
+                          aria-label="Edit sale"
+                          onClick={() => setEditSale(sale)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
