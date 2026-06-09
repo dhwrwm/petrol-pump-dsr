@@ -2,23 +2,32 @@ import {
   Fuel,
   HardHat,
   LayoutDashboard,
+  LogOut,
   ReceiptText,
   Settings,
   UserRound,
 } from "lucide-react";
-import { NavLink } from "react-router";
+import { useNavigate, NavLink } from "react-router";
+import { authClient } from "../auth-client";
 
 export function AppSidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    void navigate("/sign-in");
+  };
+
   return (
     <aside
-      className="bg-brand-900 text-brand-50 p-6 max-md:p-3.5"
+      className="bg-brand-900 text-brand-50 p-6 max-md:p-3.5 flex flex-col"
       aria-label="Main navigation"
     >
       <div className="flex items-center gap-2.5 text-xl font-extrabold mb-9 max-md:mb-3.5">
         <Fuel size={24} />
         <span>DSR</span>
       </div>
-      <nav className="grid gap-1.5 max-md:grid-cols-7">
+      <nav className="grid gap-1.5 max-md:grid-cols-7 flex-1">
         <NavLink
           to="/"
           end
@@ -99,6 +108,13 @@ export function AppSidebar() {
           Settings
         </NavLink>
       </nav>
+      <button
+        onClick={() => { void handleLogout(); }}
+        className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#c9d7d0] hover:bg-brand-800 hover:text-white max-md:justify-center max-md:text-[0px] mt-4"
+      >
+        <LogOut size={18} />
+        Logout
+      </button>
     </aside>
   );
 }
