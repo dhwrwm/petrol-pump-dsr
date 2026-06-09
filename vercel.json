@@ -1,6 +1,5 @@
 {
   "buildCommand": "pnpm --filter @petrol/web build",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "pnpm install",
-  "framework": "vite"
+  "installCommand": "pnpm install"
 }
