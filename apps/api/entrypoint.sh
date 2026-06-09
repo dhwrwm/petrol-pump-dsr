@@ -2,9 +2,8 @@
 set -e
 
 echo "Running database migrations..."
-cd apps/api
-./node_modules/.bin/prisma migrate deploy
+cd /app/apps/api
+./node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma --datasource-url "${DIRECT_URL:-$DATABASE_URL}"
 
 echo "Starting API..."
-cd /app
-exec node apps/api/dist/main.js
+exec node /app/apps/api/dist/main.js
