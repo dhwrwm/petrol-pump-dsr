@@ -10,9 +10,11 @@ export type CreateSaleDto = {
   closingMeter: string;
   rate: string;
   payments: PaymentInput[];
+  employeeId?: string;
 };
 
 export type UpdateSaleDto = {
   closingMeter: string;
   payments: PaymentInput[];
+  employeeId?: string | null;
 };

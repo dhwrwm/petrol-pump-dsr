@@ -245,6 +245,7 @@ model Sale {
   id          String          @id @default(cuid())
   shiftId     String
   customerId  String?
+  employeeId  String?
   liters      Decimal         @db.Decimal(12, 3)
   rate        Decimal         @db.Decimal(12, 2)
   amount      Decimal         @db.Decimal(12, 2)
@@ -256,6 +257,7 @@ model Sale {
 
   shift       Shift           @relation(fields: [shiftId], references: [id])
   customer    CreditCustomer? @relation(fields: [customerId], references: [id])
+  employee    Employee?       @relation(fields: [employeeId], references: [id])
   payments    Payment[]
 
   nozzleId     String
@@ -325,6 +327,7 @@ model Employee {
   assignments   NozzleAssignment[]
   documents     EmployeeDocument[]
   salaryRecords SalaryRecord[]
+  sales         Sale[]
 }
 
 model EmployeeDocument {

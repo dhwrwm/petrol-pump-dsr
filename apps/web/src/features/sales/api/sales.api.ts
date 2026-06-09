@@ -15,6 +15,7 @@ export type CreateSaleInput = {
     amount: string;
     reference?: string;
   }>;
+  employeeId?: string;
 };
 
 export function createSale(input: CreateSaleInput) {
@@ -41,6 +42,7 @@ export type UpdateSaleInput = {
     amount: string;
     reference?: string;
   }>;
+  employeeId?: string | null;
 };
 
 export function updateSale(saleId: string, input: UpdateSaleInput) {

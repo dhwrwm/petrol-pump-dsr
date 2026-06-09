@@ -141,6 +141,7 @@ export class SalesService {
       include: {
         nozzle: true,
         customer: true,
+        employee: { select: { id: true, name: true } },
         payments: true,
         meterReading: { select: { openingMeter: true, closingMeter: true } },
       },
@@ -237,6 +238,7 @@ export class SalesService {
         liters,
         rate: input.rate,
         amount,
+        ...(input.employeeId ? { employeeId: input.employeeId } : {}),
         payments: {
           create: input.payments.map((p) => ({
             shiftId,
@@ -246,7 +248,12 @@ export class SalesService {
           })),
         },
       },
-      include: { payments: true, nozzle: true, meterReading: { select: { openingMeter: true, closingMeter: true } } },
+      include: {
+        payments: true,
+        nozzle: true,
+        employee: { select: { id: true, name: true } },
+        meterReading: { select: { openingMeter: true, closingMeter: true } },
+      },
     });
   }
 
@@ -308,7 +315,11 @@ export class SalesService {
       await tx.payment.deleteMany({ where: { saleId } });
       await tx.sale.update({
         where: { id: saleId },
-        data: { liters, amount },
+        data: {
+          liters,
+          amount,
+          employeeId: input.employeeId !== undefined ? input.employeeId : undefined,
+        },
       });
       await tx.payment.createMany({
         data: input.payments.map((p) => ({
@@ -326,6 +337,7 @@ export class SalesService {
       include: {
         payments: true,
         nozzle: true,
+        employee: { select: { id: true, name: true } },
         meterReading: { select: { openingMeter: true, closingMeter: true } },
       },
     });

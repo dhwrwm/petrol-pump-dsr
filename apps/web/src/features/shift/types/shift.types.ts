@@ -11,12 +11,14 @@ export type Sale = {
   nozzleId: string;
   productType: string;
   customerId: string | null;
+  employeeId: string | null;
   liters: string;
   rate: string;
   amount: string;
   soldAt: string;
   nozzle: { id: string; nozzleNumber: number; productType: string };
   customer: { id: string; name: string } | null;
+  employee: { id: string; name: string } | null;
   payments: SalePayment[];
   meterReading: { openingMeter: string; closingMeter: string | null };
 };
