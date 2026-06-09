@@ -4,6 +4,8 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
+    branch: main
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
