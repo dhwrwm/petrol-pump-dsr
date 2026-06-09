@@ -20,7 +20,7 @@ const STEPS = ["Station", "Tanks", "Dispensers", "Nozzles"] as const;
 const defaultTank: TankSetupInput = { productType: "MS", capacity: "", currentDip: "" };
 const defaultDispenser: DispenserSetupInput = { companyName: "", serialNo: "" };
 
-function mkNozzle(tanks: TankSetupInput[], dispensers: DispenserSetupInput[]): NozzleSetupInput {
+function mkNozzle(tanks: TankSetupInput[]): NozzleSetupInput {
   return {
     nozzleNumber: "1",
     productType: tanks[0]?.productType ?? "MS",
@@ -213,7 +213,7 @@ export function StationSetupPage({ statusError, onConfigured }: StationSetupPage
     setNozzles((ns) => ns.map((n, idx) => (idx === i ? { ...n, ...patch } : n)));
   }
   function addNozzle() {
-    setNozzles((ns) => [...ns, mkNozzle(tanks, dispensers)]);
+    setNozzles((ns) => [...ns, mkNozzle(tanks)]);
   }
   function removeNozzle(i: number) {
     setNozzles((ns) => ns.filter((_, idx) => idx !== i));

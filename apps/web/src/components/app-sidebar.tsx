@@ -1,6 +1,5 @@
 import {
   Fuel,
-  Gauge,
   HardHat,
   LayoutDashboard,
   ReceiptText,
