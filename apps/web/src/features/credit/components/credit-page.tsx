@@ -1,4 +1,5 @@
-import { RefreshCw, UserRound } from "lucide-react";
+import { useState } from "react";
+import { Plus, RefreshCw, UserRound } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCreditCustomers } from "../hooks/use-credit-customers";
+import { CreditorForm } from "./creditor-form";
 
 function formatINR(value: number) {
   return value.toLocaleString("en-IN", {
@@ -26,6 +28,7 @@ function formatINR(value: number) {
 }
 
 export function CreditPage() {
+  const [formOpen, setFormOpen] = useState(false);
   const { customers, isPending, error, refetch } = useCreditCustomers();
 
   const activeCount = customers.filter((c) => c.isActive).length;
@@ -57,8 +60,19 @@ export function CreditPage() {
           >
             <RefreshCw size={18} />
           </Button>
+          <Button type="button" onClick={() => setFormOpen(true)}>
+            <Plus size={16} />
+            Add Creditor
+          </Button>
         </div>
       </header>
+
+      {formOpen && (
+        <CreditorForm
+          onClose={() => setFormOpen(false)}
+          onSaved={() => { void refetch(); }}
+        />
+      )}
 
       {error && (
         <Alert variant="destructive">

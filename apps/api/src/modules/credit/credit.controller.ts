@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req } from "@nestjs/common";
 import {
   getRequiredSession,
   type RequestHeaders,
@@ -12,7 +12,15 @@ export class CreditController {
   @Get()
   async list(@Req() request: RequestHeaders) {
     const session = await getRequiredSession(request);
-
     return this.creditService.list(session.user.id);
+  }
+
+  @Post()
+  async create(
+    @Req() request: RequestHeaders,
+    @Body() body: { name: string; phone?: string; vehicleNo?: string; creditLimit?: string },
+  ) {
+    const session = await getRequiredSession(request);
+    return this.creditService.create(session.user.id, body);
   }
 }
