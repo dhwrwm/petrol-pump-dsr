@@ -64,8 +64,9 @@ COPY --from=build /app/packages/config/package.json ./packages/config/
 COPY --from=build /app/package.json ./
 COPY --from=build /app/pnpm-workspace.yaml ./
 
-# Copy Prisma schema + migrations (needed for migrate deploy at runtime)
+# Copy Prisma schema, migrations, and config (needed for migrate deploy at runtime)
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 
 # Copy entrypoint script
 COPY apps/api/entrypoint.sh ./entrypoint.sh
