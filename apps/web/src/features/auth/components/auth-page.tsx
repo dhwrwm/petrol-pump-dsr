@@ -1,4 +1,4 @@
-import { Fuel, LockKeyhole, LogIn, Mail, UserRound } from "lucide-react";
+import { Eye, EyeOff, Fuel, LockKeyhole, LogIn, Mail, UserRound } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -187,9 +189,17 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                 name="password"
                 placeholder="At least 8 characters"
                 required
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="border-0 pl-0 shadow-none focus-visible:ring-0"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="pr-3 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </span>
           </label>
           {mode === "signup" ? (
@@ -203,9 +213,17 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
                   name="passwordConfirmation"
                   placeholder="Repeat password"
                   required
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   className="border-0 pl-0 shadow-none focus-visible:ring-0"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="pr-3 text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </span>
             </label>
           ) : (
