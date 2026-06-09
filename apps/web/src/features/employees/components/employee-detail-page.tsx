@@ -11,6 +11,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -265,17 +273,18 @@ export function EmployeeDetailPage() {
             className="flex gap-2 flex-wrap items-end border-t pt-4"
           >
             <div className="grid gap-1.5">
-              <label className="text-xs font-medium">Type</label>
-              <select
-                value={docType}
-                onChange={(e) => setDocType(e.target.value)}
-                className="border rounded-md px-2 py-1.5 text-sm bg-background"
-              >
-                <option value="AADHAR">Aadhar</option>
-                <option value="PAN">PAN Card</option>
-                <option value="DRIVING_LICENSE">Driving Licence</option>
-                <option value="OTHER">Other</option>
-              </select>
+              <Label className="text-xs">Type</Label>
+              <Select value={docType} onValueChange={setDocType}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AADHAR">Aadhar</SelectItem>
+                  <SelectItem value="PAN">PAN Card</SelectItem>
+                  <SelectItem value="DRIVING_LICENSE">Driving Licence</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-1.5 flex-1 min-w-[200px]">
               <label className="text-xs font-medium">Document URL *</label>

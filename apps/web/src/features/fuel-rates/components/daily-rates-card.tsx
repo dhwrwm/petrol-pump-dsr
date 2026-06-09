@@ -8,6 +8,8 @@ import {
   CardTitle,
   CardAction,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PRODUCT_LABELS } from "../../setup/types/setup.types";
 import type { ProductType } from "../../setup/types/setup.types";
 import type { FuelRate } from "../types/fuel-rates.types";
@@ -119,15 +121,15 @@ export function DailyRatesCard({
       <CardContent className="px-4 pt-3">
         <div className="flex flex-wrap gap-3 items-end">
           {requiredTypes.map((pt) => (
-            <div key={pt} className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
+            <div key={pt} className="grid gap-1.5">
+              <Label className="text-xs text-muted-foreground">
                 {PRODUCT_LABELS[pt as ProductType] ?? pt} (₹/L)
-              </label>
-              <input
+              </Label>
+              <Input
                 type="number"
                 min="0"
                 step="0.01"
-                className="border rounded-md p-2 bg-background text-sm w-32"
+                className="w-32"
                 placeholder="0.00"
                 value={draft[pt] ?? ""}
                 onChange={(e) =>

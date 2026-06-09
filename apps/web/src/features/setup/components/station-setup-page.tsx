@@ -3,6 +3,14 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createStationSetup } from "../api/setup.api";
 import {
   PRODUCT_LABELS,
@@ -318,18 +326,22 @@ export function StationSetupPage({ statusError, onConfigured }: StationSetupPage
                   key={i}
                   className="grid grid-cols-[1fr_1fr_1fr_36px] items-end gap-2.5 p-3.5 border rounded-lg bg-card max-md:grid-cols-1"
                 >
-                  <label className="grid gap-1.5 text-sm font-bold text-muted-foreground">
-                    Product type
-                    <select
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  <div className="grid gap-1.5">
+                    <Label className="text-sm font-bold text-muted-foreground">Product type</Label>
+                    <Select
                       value={tank.productType}
-                      onChange={(e) => updateTank(i, { productType: e.target.value as ProductType })}
+                      onValueChange={(v) => updateTank(i, { productType: v as ProductType })}
                     >
-                      {PRODUCT_TYPES.map((pt) => (
-                        <option key={pt} value={pt}>{PRODUCT_LABELS[pt]}</option>
-                      ))}
-                    </select>
-                  </label>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRODUCT_TYPES.map((pt) => (
+                          <SelectItem key={pt} value={pt}>{PRODUCT_LABELS[pt]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <label className="grid gap-1.5 text-sm font-bold text-muted-foreground">
                     Capacity (L)
                     <Input
@@ -477,46 +489,58 @@ export function StationSetupPage({ statusError, onConfigured }: StationSetupPage
                         onChange={(e) => { updateNozzle(i, { nozzleNumber: e.target.value }); setStepError(""); }}
                       />
                     </label>
-                    <label className="grid gap-1.5 text-sm font-bold text-muted-foreground">
-                      Product
-                      <select
-                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    <div className="grid gap-1.5">
+                      <Label className="text-sm font-bold text-muted-foreground">Product</Label>
+                      <Select
                         value={n.productType}
-                        onChange={(e) => updateNozzle(i, { productType: e.target.value as ProductType })}
+                        onValueChange={(v) => updateNozzle(i, { productType: v as ProductType })}
                       >
-                        {PRODUCT_TYPES.map((pt) => (
-                          <option key={pt} value={pt}>{PRODUCT_LABELS[pt]}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="grid gap-1.5 text-sm font-bold text-muted-foreground">
-                      Tank
-                      <select
-                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                        value={n.tankIndex}
-                        onChange={(e) => updateNozzle(i, { tankIndex: Number(e.target.value) })}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRODUCT_TYPES.map((pt) => (
+                            <SelectItem key={pt} value={pt}>{PRODUCT_LABELS[pt]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-sm font-bold text-muted-foreground">Tank</Label>
+                      <Select
+                        value={String(n.tankIndex)}
+                        onValueChange={(v) => updateNozzle(i, { tankIndex: Number(v) })}
                       >
-                        {tanks.map((t, ti) => (
-                          <option key={ti} value={ti}>
-                            Tank {ti + 1} – {PRODUCT_LABELS[t.productType]}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="grid gap-1.5 text-sm font-bold text-muted-foreground">
-                      Dispenser
-                      <select
-                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                        value={n.dispenserIndex}
-                        onChange={(e) => updateNozzle(i, { dispenserIndex: Number(e.target.value) })}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tanks.map((t, ti) => (
+                            <SelectItem key={ti} value={String(ti)}>
+                              Tank {ti + 1} – {PRODUCT_LABELS[t.productType]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-sm font-bold text-muted-foreground">Dispenser</Label>
+                      <Select
+                        value={String(n.dispenserIndex)}
+                        onValueChange={(v) => updateNozzle(i, { dispenserIndex: Number(v) })}
                       >
-                        {dispensers.map((d, di) => (
-                          <option key={di} value={di}>
-                            {di + 1}. {d.companyName || `Dispenser ${di + 1}`}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dispensers.map((d, di) => (
+                            <SelectItem key={di} value={String(di)}>
+                              {di + 1}. {d.companyName || `Dispenser ${di + 1}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"

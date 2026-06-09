@@ -25,6 +25,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   addDispenserToTank,
   addNozzle,
   createTank,
@@ -80,15 +87,16 @@ function AddTankForm({ onSuccess }: { onSuccess: () => void }) {
       <div className="grid grid-cols-3 gap-3 max-md:grid-cols-1">
         <div className="grid gap-1.5">
           <Label>Product type</Label>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            value={productType}
-            onChange={(e) => setProductType(e.target.value as ProductType)}
-          >
-            {PRODUCT_TYPES.map((pt) => (
-              <option key={pt} value={pt}>{PRODUCT_LABELS[pt]}</option>
-            ))}
-          </select>
+          <Select value={productType} onValueChange={(v) => setProductType(v as ProductType)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PRODUCT_TYPES.map((pt) => (
+                <SelectItem key={pt} value={pt}>{PRODUCT_LABELS[pt]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid gap-1.5">
           <Label>Capacity (L)</Label>
@@ -277,15 +285,16 @@ function AddNozzleForm({
     <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 items-end mt-2 pl-4 border-l-2 border-muted">
       <div className="grid gap-1">
         <Label className="text-xs">Product</Label>
-        <select
-          className="h-8 rounded-md border border-input bg-background px-2 text-sm w-36"
-          value={productType}
-          onChange={(e) => setProductType(e.target.value as ProductType)}
-        >
-          {PRODUCT_TYPES.map((pt) => (
-            <option key={pt} value={pt}>{PRODUCT_LABELS[pt]}</option>
-          ))}
-        </select>
+        <Select value={productType} onValueChange={(v) => setProductType(v as ProductType)}>
+          <SelectTrigger className="h-8 w-36 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PRODUCT_TYPES.map((pt) => (
+              <SelectItem key={pt} value={pt}>{PRODUCT_LABELS[pt]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="grid gap-1">
         <Label className="text-xs">Nozzle number</Label>

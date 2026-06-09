@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PRODUCT_LABELS } from "../../setup/types/setup.types";
 import type { StationSetup, ProductType } from "../../setup/types/setup.types";
 import type { FuelRate } from "../../fuel-rates/types/fuel-rates.types";
@@ -39,7 +48,10 @@ export function SalesForm({
   );
 
   const [nozzleId, setNozzleId] = useState(
-    editSale?.nozzleId ?? nozzles.find((n) => !usedNozzleIds.includes(n.id))?.id ?? nozzles[0]?.id ?? "",
+    editSale?.nozzleId ??
+      nozzles.find((n) => !usedNozzleIds.includes(n.id))?.id ??
+      nozzles[0]?.id ??
+      "",
   );
   const [openingMeter, setOpeningMeter] = useState("");
   const [closingMeter, setClosingMeter] = useState("");
@@ -50,7 +62,6 @@ export function SalesForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Pre-fill for edit mode; fetch opening meter for create mode
   useEffect(() => {
     if (editSale) {
       setOpeningMeter(editSale.meterReading.openingMeter);
@@ -171,8 +182,8 @@ export function SalesForm({
         className="space-y-4"
       >
         {/* Nozzle */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Nozzle</label>
+        <div className="space-y-1.5">
+          <Label>Nozzle</Label>
           {isEdit ? (
             <div className="w-full border rounded-md p-2 bg-muted text-muted-foreground text-sm">
               Nozzle #{selectedNozzle?.nozzleNumber} —{" "}
@@ -180,27 +191,27 @@ export function SalesForm({
                 selectedNozzle?.productType}
             </div>
           ) : (
-            <select
-              className="w-full border rounded-md p-2 bg-background"
-              value={nozzleId}
-              onChange={(e) => setNozzleId(e.target.value)}
-              required
-            >
-              {nozzles.map((n) => {
-                const used = usedNozzleIds.includes(n.id);
-                return (
-                  <option key={n.id} value={n.id} disabled={used}>
-                    Nozzle #{n.nozzleNumber} —{" "}
-                    {PRODUCT_LABELS[n.productType as ProductType] ??
-                      n.productType}
-                    {used ? " (already recorded)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <Select value={nozzleId} onValueChange={setNozzleId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select nozzle" />
+              </SelectTrigger>
+              <SelectContent>
+                {nozzles.map((n) => {
+                  const used = usedNozzleIds.includes(n.id);
+                  return (
+                    <SelectItem key={n.id} value={n.id} disabled={used}>
+                      Nozzle #{n.nozzleNumber} —{" "}
+                      {PRODUCT_LABELS[n.productType as ProductType] ??
+                        n.productType}
+                      {used ? " (already recorded)" : ""}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           )}
           {rate && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground">
               Today's rate: <strong>₹{Number(rate).toFixed(2)}/L</strong>
             </p>
           )}
@@ -208,31 +219,25 @@ export function SalesForm({
 
         {/* Meter readings */}
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Opening meter
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label>Opening meter</Label>
+            <Input
               type="number"
-              className="w-full border rounded-md p-2 bg-muted text-muted-foreground cursor-not-allowed"
+              className="bg-muted text-muted-foreground cursor-not-allowed"
               placeholder={isMeterLoading ? "Loading..." : "0.000"}
               value={openingMeter}
               readOnly
-              required
             />
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground">
               Previous day's closing
             </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Closing meter
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label>Closing meter</Label>
+            <Input
               type="number"
               min="0"
               step="0.001"
-              className="w-full border rounded-md p-2 bg-background"
               placeholder="0.000"
               value={closingMeter}
               onChange={(e) => setClosingMeter(e.target.value)}
@@ -270,7 +275,7 @@ export function SalesForm({
         {/* Payments */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium">Payments</label>
+            <Label>Payments</Label>
             <button
               type="button"
               onClick={addPayment}
@@ -282,22 +287,26 @@ export function SalesForm({
           <div className="space-y-2">
             {payments.map((p, i) => (
               <div key={i} className="flex gap-2 items-center">
-                <select
-                  className="border rounded-md p-2 bg-background text-sm w-28"
+                <Select
                   value={p.method}
-                  onChange={(e) =>
-                    updatePayment(i, "method", e.target.value as PaymentMethod)
+                  onValueChange={(v) =>
+                    updatePayment(i, "method", v as PaymentMethod)
                   }
                 >
-                  <option value="CASH">Cash</option>
-                  <option value="UPI">UPI</option>
-                  <option value="CARD">Card</option>
-                </select>
-                <input
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CASH">Cash</SelectItem>
+                    <SelectItem value="UPI">UPI</SelectItem>
+                    <SelectItem value="CARD">Card</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
                   type="number"
                   min="0"
                   step="0.01"
-                  className="flex-1 border rounded-md p-2 bg-background text-sm"
+                  className="flex-1"
                   placeholder="Amount (₹)"
                   value={p.amount}
                   onChange={(e) => updatePayment(i, "amount", e.target.value)}
