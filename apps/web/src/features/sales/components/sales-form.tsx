@@ -119,6 +119,10 @@ export function SalesForm({
     e.preventDefault();
     const validPayments = payments.filter((p) => Number(p.amount) > 0);
 
+    if (employees.length > 0 && !employeeId) {
+      setError("Select an employee.");
+      return;
+    }
     if (!nozzleId || !openingMeter || !closingMeter) {
       setError("Fill in all meter readings.");
       return;
@@ -229,12 +233,7 @@ export function SalesForm({
         {/* Employee */}
         {employees.length > 0 && (
           <div className="space-y-1.5">
-            <Label>
-              Employee{" "}
-              <span className="text-muted-foreground font-normal">
-                (optional)
-              </span>
-            </Label>
+            <Label>Employee</Label>
             <Select
               value={employeeId || "__none__"}
               onValueChange={(v) => setEmployeeId(v === "__none__" ? "" : v)}
