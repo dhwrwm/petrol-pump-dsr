@@ -9,9 +9,13 @@ import {
 } from "lucide-react";
 import { useNavigate, NavLink } from "react-router";
 import { authClient } from "../auth-client";
+import { useTodayRates } from "../features/fuel-rates";
+import { PRODUCT_LABELS } from "../features/setup/types/setup.types";
+import type { ProductType } from "../features/setup/types/setup.types";
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const { rates, isPending } = useTodayRates();
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -27,12 +31,33 @@ export function AppSidebar() {
         <Fuel size={24} />
         <span>DSR</span>
       </div>
-      <nav className="grid gap-1.5 max-md:grid-cols-7 flex-1">
+
+      {/* Daily rates */}
+      <div className="mb-6 max-md:hidden">
+        {!isPending && rates.length === 0 ? (
+          <p className="text-xs text-amber-400 font-medium">Rates not set for today</p>
+        ) : (
+          <div className="grid gap-1">
+            {rates.map((r) => (
+              <div key={r.productType} className="flex justify-between text-xs">
+                <span className="text-[#8faaa2]">
+                  {PRODUCT_LABELS[r.productType as ProductType] ?? r.productType}
+                </span>
+                <span className="font-semibold text-brand-50">
+                  ₹{Number(r.rate).toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <nav className="grid gap-4 max-md:grid-cols-7">
         <NavLink
           to="/"
           end
           className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+            `flex items-center gap-2.5 no-underline px-3 py-1.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
                 ? "bg-brand-800 text-white"
                 : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
@@ -45,7 +70,7 @@ export function AppSidebar() {
         {/* <NavLink
           to="/shifts"
           className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+            `flex items-center gap-2.5 no-underline px-3 py-1.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
                 ? "bg-brand-800 text-white"
                 : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
@@ -58,7 +83,7 @@ export function AppSidebar() {
         <NavLink
           to="/sales"
           className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+            `flex items-center gap-2.5 no-underline px-3 py-1.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
                 ? "bg-brand-800 text-white"
                 : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
@@ -71,7 +96,7 @@ export function AppSidebar() {
         <NavLink
           to="/credit"
           className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+            `flex items-center gap-2.5 no-underline px-3 py-1.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
                 ? "bg-brand-800 text-white"
                 : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
@@ -84,7 +109,7 @@ export function AppSidebar() {
         <NavLink
           to="/employees"
           className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+            `flex items-center gap-2.5 no-underline px-3 py-1.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
                 ? "bg-brand-800 text-white"
                 : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
@@ -97,7 +122,7 @@ export function AppSidebar() {
         <NavLink
           to="/settings"
           className={({ isActive }) =>
-            `flex items-center gap-2.5 no-underline px-3 py-2.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
+            `flex items-center gap-2.5 no-underline px-3 py-1.5 rounded-lg max-md:justify-center max-md:text-[0px] ${
               isActive
                 ? "bg-brand-800 text-white"
                 : "text-[#c9d7d0] hover:bg-brand-800 hover:text-white"
@@ -109,8 +134,10 @@ export function AppSidebar() {
         </NavLink>
       </nav>
       <button
-        onClick={() => { void handleLogout(); }}
-        className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[#c9d7d0] hover:bg-brand-800 hover:text-white max-md:justify-center max-md:text-[0px] mt-4"
+        onClick={() => {
+          void handleLogout();
+        }}
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[#c9d7d0] hover:bg-brand-800 hover:text-white max-md:justify-center max-md:text-[0px] mt-4"
       >
         <LogOut size={18} />
         Logout

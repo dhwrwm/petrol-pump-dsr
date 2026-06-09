@@ -14,8 +14,7 @@ import { PRODUCT_LABELS } from "../../setup/types/setup.types";
 import type { StationSetup, ProductType } from "../../setup/types/setup.types";
 import type { FuelRate } from "../../fuel-rates/types/fuel-rates.types";
 import type { CurrentShift, Sale } from "../../shift/types/shift.types";
-import { getEmployees } from "../../employees/api/employees.api";
-import type { Employee } from "../../employees/types/employees.types";
+import { useEmployees } from "../../employees/hooks/use-employees";
 import { createSale, getNozzleMeter, updateSale } from "../api/sales.api";
 
 type PaymentMethod = "CASH" | "UPI" | "CARD";
@@ -56,7 +55,8 @@ export function SalesForm({
       "",
   );
   const [employeeId, setEmployeeId] = useState(editSale?.employeeId ?? "");
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const { employees: allEmployees } = useEmployees();
+  const employees = allEmployees.filter((e) => e.isActive);
   const [openingMeter, setOpeningMeter] = useState("");
   const [closingMeter, setClosingMeter] = useState("");
   const [payments, setPayments] = useState<PaymentRow[]>([
@@ -65,12 +65,6 @@ export function SalesForm({
   const [isMeterLoading, setIsMeterLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    void getEmployees()
-      .then((list) => setEmployees(list.filter((e) => e.isActive)))
-      .catch(() => setEmployees([]));
-  }, []);
 
   useEffect(() => {
     if (editSale) {
@@ -235,13 +229,21 @@ export function SalesForm({
         {/* Employee */}
         {employees.length > 0 && (
           <div className="space-y-1.5">
-            <Label>Employee <span className="text-muted-foreground font-normal">(optional)</span></Label>
-            <Select value={employeeId} onValueChange={setEmployeeId}>
+            <Label>
+              Employee{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Select
+              value={employeeId || "__none__"}
+              onValueChange={(v) => setEmployeeId(v === "__none__" ? "" : v)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— None —</SelectItem>
+                <SelectItem value="__none__">— None —</SelectItem>
                 {employees.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
                     {e.name} · {e.designation}

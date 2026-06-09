@@ -68,8 +68,13 @@ export function SalesPage() {
     !ratesPending &&
     requiredTypes.every((pt) => rates.some((r) => r.productType === pt));
 
+  const todayStr = new Date().toDateString();
   const todaySales = currentShift
-    ? sales.filter((s) => s.shiftId === currentShift.id)
+    ? sales.filter(
+        (s) =>
+          s.shiftId === currentShift.id &&
+          new Date(s.soldAt).toDateString() === todayStr,
+      )
     : [];
 
   const usedNozzleIds = todaySales.map((s) => s.nozzleId);
@@ -102,6 +107,20 @@ export function SalesPage() {
 
   const totalAmount = sales.reduce((sum, s) => sum + Number(s.amount), 0);
   const totalLiters = sales.reduce((sum, s) => sum + Number(s.liters), 0);
+
+  // Group sales by local date string
+  const salesByDate = sales.reduce<Record<string, typeof sales>>((acc, s) => {
+    const date = new Date(s.soldAt).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    (acc[date] ??= []).push(s);
+    return acc;
+  }, {});
+  const sortedDates = Object.keys(salesByDate).sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+  );
 
   return (
     <>
@@ -212,48 +231,66 @@ export function SalesPage() {
               <p className="text-sm">No sales recorded yet.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nozzle</TableHead>
-                  <TableHead>Fuel</TableHead>
-                  <TableHead>Liters</TableHead>
-                  <TableHead className="max-md:hidden">Amount</TableHead>
-                  <TableHead className="max-md:hidden">Mode</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell>Nozzle #{sale.nozzle.nozzleNumber}</TableCell>
-                    <TableCell>{sale.productType}</TableCell>
-                    <TableCell>{Number(sale.liters).toFixed(3)}</TableCell>
-                    <TableCell className="max-md:hidden">
-                      ₹{formatINR(Number(sale.amount))}
-                    </TableCell>
-                    <TableCell
-                      className="max-md:hidden"
-                      title={formatTime(sale.soldAt)}
-                    >
-                      {sale.payments[0]?.method ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      {isSaleEditable(sale) && (
-                        <button
-                          type="button"
-                          aria-label="Edit sale"
-                          onClick={() => setEditSale(sale)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="space-y-6">
+              {sortedDates.map((date) => {
+                const group = salesByDate[date];
+                const dayAmount = group.reduce((s, r) => s + Number(r.amount), 0);
+                return (
+                  <div key={date}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {date}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ₹{formatINR(dayAmount)} · {group.length} sale{group.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nozzle</TableHead>
+                          <TableHead>Fuel</TableHead>
+                          <TableHead>Liters</TableHead>
+                          <TableHead className="max-md:hidden">Amount</TableHead>
+                          <TableHead className="max-md:hidden">Mode</TableHead>
+                          <TableHead className="w-10" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.map((sale) => (
+                          <TableRow key={sale.id}>
+                            <TableCell>Nozzle #{sale.nozzle.nozzleNumber}</TableCell>
+                            <TableCell>{sale.productType}</TableCell>
+                            <TableCell>{Number(sale.liters).toFixed(3)}</TableCell>
+                            <TableCell className="max-md:hidden">
+                              ₹{formatINR(Number(sale.amount))}
+                            </TableCell>
+                            <TableCell
+                              className="max-md:hidden"
+                              title={formatTime(sale.soldAt)}
+                            >
+                              {sale.payments[0]?.method ?? "—"}
+                            </TableCell>
+                            <TableCell>
+                              {isSaleEditable(sale) && (
+                                <button
+                                  type="button"
+                                  aria-label="Edit sale"
+                                  onClick={() => setEditSale(sale)}
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <Pencil size={15} />
+                                </button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
