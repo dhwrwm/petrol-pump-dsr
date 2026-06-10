@@ -6,6 +6,8 @@ import { prisma } from "./lib/prisma.js";
 
 const config = getAppConfig();
 
+const isProduction = config.nodeEnv === "production";
+
 export const auth = betterAuth({
   secret: config.betterAuthSecret,
   baseURL: `${config.apiUrl}/api/auth`,
@@ -13,6 +15,13 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  advanced: {
+    // SameSite=None is required for cross-origin cookie sending in production
+    // (API on onrender.com is a different site from the web app)
+    ...(isProduction && {
+      defaultCookieAttributes: { sameSite: "none", secure: true },
+    }),
+  },
   emailAndPassword: {
     enabled: true,
   },
